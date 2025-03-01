@@ -1,4 +1,4 @@
-# Harmony Deck: Apple Music Browser Now Playing Display
+# Harmony Deck: Apple Music Stream Display
 
 A customizable Apple Music now playing display for macOS.
 
