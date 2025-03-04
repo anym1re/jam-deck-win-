@@ -552,9 +552,16 @@
                             const artworkContainer = document.getElementById('artworkContainer');
                             
                             if (data.artworkPath) {
-                             // Use the artworkPath provided by the JSON response
-                                artworkContainer.innerHTML = `<img src="${data.artworkPath}" alt="Album art">`;
-                                artworkContainer.className = 'album-art';
+                                // Use the artworkPath provided by the JSON response
+                                if (!previousState || previousState.artworkPath !== data.artworkPath) {
+                                    // Preload the new image first
+                                    const newImg = new Image();
+                                    newImg.onload = function() {
+                                        artworkContainer.innerHTML = `<img src="${data.artworkPath}" alt="Album art">`;
+                                        artworkContainer.className = 'album-art';
+                                    };
+                                    newImg.src = data.artworkPath;
+                                }
                             } else {
                                 // No artwork, show music note
                                 artworkContainer.innerHTML = '♪';
