@@ -100,6 +100,16 @@ To make the server start automatically when you boot your Mac:
 
 Advanced users can modify the CSS in `overlay.html` to create custom themes or change the layout.
 
+### Changing the Port
+
+By default, the server runs on port 8080. To change this:
+
+1. Open `music_server.py` in a text editor
+2. Find the line near the top that says `PORT = 8080`
+3. Change `8080` to your desired port number
+4. Save the file and restart the server
+5. Update your browser source URL in OBS to use the new port
+
 ## License
 
 [MIT License](LICENSE)
