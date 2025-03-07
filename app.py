@@ -23,7 +23,7 @@ class JamDeckApp(rumps.App):
             rumps.MenuItem("Start Server", callback=self.toggle_server),
             None,  # Separator
             rumps.MenuItem("Open in Browser", callback=self.open_browser),
-            rumps.MenuItem("Open in OBS", callback=self.open_obs_instructions),
+            rumps.MenuItem("Copy Source URL", callback=self.copy_source_url),
             None,  # Separator
             rumps.MenuItem("About", callback=self.show_about)
         ]
@@ -161,20 +161,24 @@ class JamDeckApp(rumps.App):
             message="Start the server first."
         )
 
-    def open_obs_instructions(self, _):
-        """Show instructions for OBS"""
-        rumps.alert(
-            title="OBS Setup Instructions",
-            message=(
-                "To use Jam Deck in OBS:\n\n"
-                "1. Add a new Browser Source\n"
-                "2. Enter URL: http://localhost:8080\n"
-                "3. Set width to 800 and height to 140\n"
-                "4. Check 'Refresh browser when scene becomes active'\n"
-                "5. Click OK\n\n"
-                "Make sure the Jam Deck server is running."
+    def copy_source_url(self, _):
+        """Copy source URL to clipboard"""
+        try:
+            import subprocess
+            # Copy URL to clipboard using pbcopy
+            url = "http://localhost:8080"
+            subprocess.run("pbcopy", text=True, input=url)
+            rumps.notification(
+                title="Jam Deck",
+                subtitle="URL Copied",
+                message="OBS source URL copied to clipboard"
             )
-        )
+        except Exception as e:
+            rumps.notification(
+                title="Jam Deck",
+                subtitle="Error",
+                message=f"Could not copy URL: {str(e)}"
+            )
 
     def show_about(self, _):
         """Show about dialog"""
@@ -184,9 +188,14 @@ class JamDeckApp(rumps.App):
                 "Jam Deck for OBS\n"
                 "Version 1.0.0\n\n"
                 "Display your Apple Music tracks in OBS.\n\n"
+                "For OBS: Add Browser Source with URL http://localhost:8080\n"
+                "Width: 800px, Height: 140px\n\n"
                 "© 2025 Henry Manes"
             )
         )
 
 if __name__ == "__main__":
-    JamDeckApp().run()
+    app = JamDeckApp()
+    # Auto-start server when app launches
+    app.start_server()
+    app.run()
