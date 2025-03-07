@@ -1,4 +1,4 @@
-# Harmony Deck: Dev Reference Guide
+# Jam Deck for OBS: Dev Reference Guide
 
 ## Project Structure
 - `music_server.py` - Python server that communicates with Apple Music and serves data
