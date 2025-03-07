@@ -1,8 +1,8 @@
-# Harmony Deck: Apple Music Stream Display
+# Jam Deck (for OBS): Apple Music Stream Display
 
 A customizable Apple Music now playing display for macOS.
 
-![Harmony Deck](preview.png)
+![Jam Deck](preview.png)
 
 ## Features
 
@@ -26,8 +26,8 @@ A customizable Apple Music now playing display for macOS.
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/harmony-deck.git
-   cd harmony-deck
+   git clone https://github.com/yourusername/jam-deck.git
+   cd jam-deck
    ```
 
 2. Make sure the Python script is executable:
@@ -89,8 +89,8 @@ To make the server start automatically when you boot your Mac:
    - Open Automator
    - Create a new Application
    - Add a "Run Shell Script" action
-   - Enter: `cd /path/to/harmony-deck && ./music_server.py`
-   - Save as "Start Harmony Deck"
+   - Enter: `cd /path/to/jam-deck && ./music_server.py`
+   - Save as "Start Jam Deck"
 
 2. Add to Login Items:
    - System Preferences → Users & Groups → Login Items
