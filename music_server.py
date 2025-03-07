@@ -5,6 +5,7 @@ import json
 from urllib.parse import parse_qs, urlparse, unquote
 import os
 import sys
+import zmq
 
 # Set port for the server
 PORT = 8080
@@ -151,12 +152,12 @@ class MusicHandler(BaseHTTPRequestHandler):
             print("Serving HTML overlay page")
             # Serve the HTML page for the overlay
             try:
-                with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'overlay.html'), 'r') as file:
+                with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'overlay.html'), 'r', encoding='utf-8') as file:
                     self.send_response(200)
                     self.send_header('Content-type', 'text/html')
                     self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
                     self.end_headers()
-                    self.wfile.write(file.read().encode())
+                    self.wfile.write(file.read().encode('utf-8'))
             except Exception as e:
                 print(f"Error serving HTML: {e}")
                 self.send_response(500)
