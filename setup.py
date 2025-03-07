@@ -10,14 +10,14 @@ if os.path.exists(libffi_source) and not os.path.exists(libffi_dest):
     shutil.copy2(libffi_source, libffi_dest)
     print(f"Copied {libffi_source} to {libffi_dest}")
 
-APP = ['music_server.py']
+APP = ['app.py']
 DATA_FILES = [
-    ('', ['overlay.html', 'jamdeck.icns']),  # Required files
+    ('', ['overlay.html', 'jamdeck.icns', 'music_server.py']),  # Required files
     ('Frameworks', ['libffi.8.dylib']),  # Include libffi in the Frameworks directory
 ]
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['zmq', 'ctypes'],  # Explicitly include zmq and ctypes
+    'packages': ['zmq', 'ctypes', 'rumps'],  # Explicitly include required packages
     'includes': ['_ctypes'],  # Include _ctypes module
     'frameworks': ['/opt/homebrew/Cellar/libffi/3.4.7/lib/libffi.8.dylib'],  # Include libffi as a framework
     'dylib_excludes': ['libffi.dylib'],  # Exclude any old libffi versions
@@ -29,6 +29,8 @@ OPTIONS = {
         'CFBundleShortVersionString': '1.0.0',
         'NSAppleEventsUsageDescription': 'This app requires access to Apple Music to display current track information.',
         'NSHumanReadableCopyright': '© 2025 Henry Manes',
+        'LSUIElement': True,  # Makes the app a background agent with no dock icon
+        'LSBackgroundOnly': False,  # Allows menu bar icon
     },
     'iconfile': 'jamdeck.icns',
     'extra_scripts': ['collect_zmq.py'],

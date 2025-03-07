@@ -6,9 +6,36 @@ from urllib.parse import parse_qs, urlparse, unquote
 import os
 import sys
 import zmq
+import signal
+import atexit
 
 # Set port for the server
 PORT = 8080
+
+# Initialize ZMQ context as None - we'll create it when needed and clean it up on exit
+zmq_context = None
+
+# Function to clean up resources on exit
+def cleanup():
+    global zmq_context
+    if zmq_context:
+        print("Closing ZMQ context...")
+        zmq_context.term()
+        zmq_context = None
+        print("ZMQ context closed")
+
+# Register cleanup function to run on exit
+atexit.register(cleanup)
+
+# Handle signals for clean shutdown
+def signal_handler(sig, frame):
+    print("\nShutting down server...")
+    cleanup()
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # Function to get current Apple Music track via AppleScript
 def get_apple_music_track():
@@ -69,8 +96,8 @@ def get_apple_music_track():
         # Debug info
         print("Executing AppleScript...")
         
-        # Run the AppleScript
-        result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+        # Run the AppleScript with a timeout to prevent freezing
+        result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True, timeout=5)
         
         # Print the raw output for debugging
         print(f"AppleScript raw output: {result.stdout}")
@@ -90,6 +117,9 @@ def get_apple_music_track():
             print(f"Invalid JSON: {result.stdout.strip()}")
             # Return a fallback JSON if the AppleScript output isn't valid JSON
             return json.dumps({"playing": False, "error": "Invalid JSON from AppleScript"})
+    except subprocess.TimeoutExpired:
+        print("Error: AppleScript timed out after 5 seconds")
+        return json.dumps({"playing": False, "error": "AppleScript timed out"})
     except Exception as e:
         print(f"Error executing AppleScript: {e}")
         return json.dumps({"playing": False, "error": str(e)})
@@ -174,6 +204,12 @@ class MusicHandler(BaseHTTPRequestHandler):
 # Start the web server
 def run_server():
     try:
+        # Initialize ZMQ context if needed
+        global zmq_context
+        if zmq_context is None:
+            zmq_context = zmq.Context()
+            print("ZMQ context initialized")
+        
         server_address = ('', PORT)
         httpd = HTTPServer(server_address, MusicHandler)
         print(f"Starting music server on port {PORT}...")
@@ -191,9 +227,11 @@ def run_server():
     except KeyboardInterrupt:
         print("\nShutting down server...")
         httpd.server_close()
+        cleanup()
         print("Server stopped")
     except Exception as e:
         print(f"Server error: {e}")
+        cleanup()
 
 if __name__ == '__main__':
     # Force output buffering off for better debugging
