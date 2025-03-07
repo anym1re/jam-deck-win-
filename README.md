@@ -1,4 +1,4 @@
-# Jam Deck (for OBS): Apple Music Stream Display
+# Jam Deck for OBS: Apple Music Stream Display
 
 A customizable Apple Music now playing display for macOS.
 
