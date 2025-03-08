@@ -42,8 +42,8 @@ A customizable Apple Music now playing display for macOS.
 
 4. Add a Browser Source in OBS:
    - URL: `http://localhost:8080/`
-   - Width: 550 (recommended minimum)
-   - Height: 80-100
+   - Width: 400 (recommended minimum)
+   - Height: 140
    - Check "Refresh browser when scene becomes active"
 
 ## Usage
