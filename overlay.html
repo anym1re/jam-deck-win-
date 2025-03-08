@@ -118,6 +118,7 @@
             transition: all 0.3s ease;
             z-index: 100;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            align-items: flex-start;
         }
         
         .overlay-container:hover .theme-selector {
@@ -557,20 +558,24 @@
     <div class="overlay-container width-fixed">
         <!-- Theme selector (appears on hover) -->
         <div class="theme-selector">
-            <!-- Original rounded theme buttons -->
-            <div class="theme-btn active" data-theme="natural" style="background-color: #6d9b78;" title="Natural"></div>
-            <div class="theme-btn" data-theme="twitch" style="background-color: rgb(100, 65, 164);" title="Twitch"></div>
-            <div class="theme-btn" data-theme="dark" style="background-color: #121212;" title="Dark"></div>
-            <div class="theme-btn" data-theme="pink" style="background-color: #ff7ebc;" title="Pink"></div>
-            <div class="theme-btn" data-theme="light" style="background-color: #ffffff;" title="Light"></div>
-            
-            <!-- New square theme buttons -->
-            <div style="margin-left: 8px; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 8px; display: flex; gap: 4px;">
-                <div class="theme-btn square-btn" data-theme="transparent" style="background-color: transparent; border: 1px dashed #ffffff;" title="Transparent"></div>
-                <div class="theme-btn square-btn" data-theme="neon" style="background-color: #000; border: 2px solid #0ff;" title="Neon"></div>
-                <div class="theme-btn square-btn" data-theme="terminal" style="background-color: #000; border: 1px solid #0f0;" title="Terminal"></div>
-                <div class="theme-btn square-btn" data-theme="retro" style="background-color: #00f; border: 2px solid #ff0;" title="Retro"></div>
-                <div class="theme-btn square-btn" data-theme="highcontrast" style="background-color: #000; border: 2px solid #fff;" title="High Contrast"></div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Original rounded theme buttons -->
+                <div style="display: flex; gap: 4px;">
+                    <div class="theme-btn active" data-theme="natural" style="background-color: #6d9b78;" title="Natural"></div>
+                    <div class="theme-btn" data-theme="twitch" style="background-color: rgb(100, 65, 164);" title="Twitch"></div>
+                    <div class="theme-btn" data-theme="dark" style="background-color: #121212;" title="Dark"></div>
+                    <div class="theme-btn" data-theme="pink" style="background-color: #ff7ebc;" title="Pink"></div>
+                    <div class="theme-btn" data-theme="light" style="background-color: #ffffff;" title="Light"></div>
+                </div>
+                
+                <!-- New square theme buttons -->
+                <div style="display: flex; gap: 4px;">
+                    <div class="theme-btn square-btn" data-theme="transparent" style="background-color: transparent; border: 1px dashed #ffffff;" title="Transparent"></div>
+                    <div class="theme-btn square-btn" data-theme="neon" style="background-color: #000; border: 2px solid #0ff;" title="Neon"></div>
+                    <div class="theme-btn square-btn" data-theme="terminal" style="background-color: #000; border: 1px solid #0f0;" title="Terminal"></div>
+                    <div class="theme-btn square-btn" data-theme="retro" style="background-color: #00f; border: 2px solid #ff0;" title="Retro"></div>
+                    <div class="theme-btn square-btn" data-theme="highcontrast" style="background-color: #000; border: 2px solid #fff;" title="High Contrast"></div>
+                </div>
             </div>
             
             <!-- Width toggle button -->
