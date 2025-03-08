@@ -202,32 +202,32 @@
         
         /* THEMES */
         
-        /* Polar Bear Cafe (Default) Theme */
-        .theme-polar {
+        /* Natural (Default) Theme */
+        .theme-natural {
             font-family: 'Comfortaa', cursive;
         }
         
-        .theme-polar .music-container {
+        .theme-natural .music-container {
             background-color: rgba(245, 242, 235, 0.85);
             border-radius: 16px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border: 2px solid #6d9b78;
         }
         
-        .theme-polar .note-icon {
+        .theme-natural .note-icon {
             background-color: #6d9b78;
             color: white;
         }
         
-        .theme-polar .song-title {
+        .theme-natural .song-title {
             color: #3a3a3a;
         }
         
-        .theme-polar .song-artist {
+        .theme-natural .song-artist {
             color: #5a5a5a;
         }
         
-        .theme-polar .error-container {
+        .theme-natural .error-container {
             background-color: rgba(250, 235, 235, 0.85);
             border: 2px solid #c75c5c;
             color: #884444;
@@ -358,12 +358,12 @@
         }
     </style>
 </head>
-<body class="theme-polar">
+<body class="theme-natural">
     <div class="overlay-container width-fixed">
         <!-- Theme selector (appears on hover) -->
         <div class="theme-selector">
             <!-- Theme buttons -->
-            <div class="theme-btn active" data-theme="polar" style="background-color: #6d9b78;" title="Polar Bear Cafe"></div>
+            <div class="theme-btn active" data-theme="natural" style="background-color: #6d9b78;" title="Natural"></div>
             <div class="theme-btn" data-theme="twitch" style="background-color: rgb(100, 65, 164);" title="Twitch"></div>
             <div class="theme-btn" data-theme="dark" style="background-color: #121212;" title="Dark"></div>
             <div class="theme-btn" data-theme="pink" style="background-color: #ff7ebc;" title="Pink"></div>
@@ -463,7 +463,12 @@
             
             // Migrate theme setting
             if (localStorage.getItem('musicPlayerTheme')) {
-                localStorage.setItem('default_musicPlayerTheme', localStorage.getItem('musicPlayerTheme'));
+                let oldTheme = localStorage.getItem('musicPlayerTheme');
+                // Migrate old polar theme name to natural
+                if (oldTheme === 'polar') {
+                    oldTheme = 'natural';
+                }
+                localStorage.setItem('default_musicPlayerTheme', oldTheme);
             }
             
             // Migrate width setting
@@ -473,7 +478,7 @@
         }
         
         // Get saved theme or use default
-        const savedTheme = getSceneStorage('musicPlayerTheme', 'polar');
+        const savedTheme = getSceneStorage('musicPlayerTheme', 'natural');
         document.body.className = `theme-${savedTheme}`;
         
         // Get saved width setting or use default (now 'fixed')
