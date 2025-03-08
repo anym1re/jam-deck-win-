@@ -5,6 +5,7 @@ import sys
 import os
 import threading
 import time
+import json
 
 class JamDeckApp(rumps.App):
     def __init__(self):
@@ -21,9 +22,17 @@ class JamDeckApp(rumps.App):
         # Load saved scenes
         self.scenes = self.load_scenes()
         
+        # Load user preferences
+        self.preferences = self.load_preferences()
+        
         # Configure all menu items at once
         server_item = rumps.MenuItem("Start Server", callback=self.toggle_server)
         copy_scenes_menu = self.create_copy_scenes_menu()
+        
+        # Create checkable "Auto-open URLs in Browser" menu item
+        auto_open_item = rumps.MenuItem("Auto-open URLs in Browser", callback=self.toggle_auto_open)
+        # Set initial state based on preferences
+        auto_open_item.state = self.preferences.get("auto_open_urls", True)
         
         self.menu = [
             server_item,
@@ -31,6 +40,7 @@ class JamDeckApp(rumps.App):
             copy_scenes_menu,
             None,  # Separator
             rumps.MenuItem("Open in Browser", callback=self.open_browser),
+            auto_open_item,
             None,  # Separator
             rumps.MenuItem("About", callback=self.show_about)
         ]
@@ -40,12 +50,20 @@ class JamDeckApp(rumps.App):
 
     def update_menu_state(self):
         """Update the menu items based on server state"""
+        # Save current checked state of auto-open setting
+        current_auto_open_state = self.menu["Auto-open URLs in Browser"].state
+        
         if self.server_running:
             self.menu["Start Server"].title = "Stop Server"
+            # Enable "Open in Browser" when server is running
             self.menu["Open in Browser"].set_callback(self.open_browser)
         else:
             self.menu["Start Server"].title = "Start Server"
+            # Disable "Open in Browser" when server is not running
             self.menu["Open in Browser"].set_callback(self.server_not_running)
+            
+        # Preserve the checked state
+        self.menu["Auto-open URLs in Browser"].state = current_auto_open_state
 
     def toggle_server(self, sender):
         """Toggle server on/off"""
@@ -168,7 +186,15 @@ class JamDeckApp(rumps.App):
             subtitle="Server Not Running", 
             message="Start the server first."
         )
-
+        
+    def toggle_auto_open(self, sender):
+        """Toggle the auto-open browser setting"""
+        # Toggle the checkbox state
+        sender.state = not sender.state
+        
+        # Update preferences
+        self.preferences["auto_open_urls"] = sender.state
+        self.save_preferences()
 
     def show_about(self, _):
         """Show about dialog"""
@@ -207,6 +233,26 @@ class JamDeckApp(rumps.App):
                     f.write(f"{scene}\n")
         except Exception as e:
             rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}")
+            
+    def load_preferences(self):
+        """Load user preferences from config file"""
+        try:
+            prefs_path = os.path.join(os.path.expanduser("~"), ".jamdeck_prefs")
+            if os.path.exists(prefs_path):
+                with open(prefs_path, "r") as f:
+                    return json.load(f)
+            return {"auto_open_urls": True}  # Default: auto-open is enabled
+        except Exception:
+            return {"auto_open_urls": True}  # Default on error
+            
+    def save_preferences(self):
+        """Save user preferences to config file"""
+        try:
+            prefs_path = os.path.join(os.path.expanduser("~"), ".jamdeck_prefs")
+            with open(prefs_path, "w") as f:
+                json.dump(self.preferences, f)
+        except Exception as e:
+            rumps.notification("Jam Deck", "Error", f"Could not save preferences: {str(e)}")
 
     def create_copy_scenes_menu(self):
         """Create the copy scenes submenu"""
@@ -238,9 +284,8 @@ class JamDeckApp(rumps.App):
                 self.menu._menu.insertItem_atIndex_(new_copy_scenes_menu._menuitem, index)
     
     def copy_scene_url(self, sender):
-        """Copy the URL for the selected scene to clipboard"""
+        """Copy the URL for the selected scene to clipboard and optionally open in browser"""
         try:
-            import subprocess
             # Base URL
             base_url = "http://localhost:8080"
             
@@ -254,11 +299,28 @@ class JamDeckApp(rumps.App):
             # Copy URL to clipboard using pbcopy
             subprocess.run("pbcopy", text=True, input=url)
             
-            rumps.notification(
-                title="Jam Deck",
-                subtitle="URL Copied",
-                message=f"OBS source URL for scene '{scene_name}' copied to clipboard"
+            # Check if auto-open is enabled and server is running
+            should_open_browser = (
+                self.preferences.get("auto_open_urls", True) and 
+                self.server_running
             )
+            
+            # Open browser if enabled
+            if should_open_browser:
+                subprocess.run(["open", url])
+                
+                # Notification message differs when browser is opened
+                rumps.notification(
+                    title="Jam Deck",
+                    subtitle="URL Copied & Opened",
+                    message=f"Scene '{scene_name}' URL copied and opened in browser"
+                )
+            else:
+                rumps.notification(
+                    title="Jam Deck",
+                    subtitle="URL Copied",
+                    message=f"OBS source URL for scene '{scene_name}' copied to clipboard"
+                )
         except Exception as e:
             rumps.notification(
                 title="Jam Deck",
