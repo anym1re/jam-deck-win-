@@ -116,11 +116,21 @@ class JamDeckApp(rumps.App):
         """Stop the music server"""
         if self.server_running and self.server_process:
             try:
-                # Terminate the server process
-                self.server_process.terminate()
-                self.server_process = None
+                # Store reference to process before nulling it
+                process_to_terminate = self.server_process
+                
+                # Update state first to prevent monitor_server from triggering crash notification
                 self.server_running = False
+                self.server_process = None
                 self.update_menu_state()
+                
+                # Terminate the server process
+                if process_to_terminate:
+                    try:
+                        process_to_terminate.terminate()
+                    except Exception:
+                        # Process might have already exited
+                        pass
                 
                 # Notify user
                 rumps.notification(
@@ -139,32 +149,39 @@ class JamDeckApp(rumps.App):
 
     def monitor_server(self):
         """Monitor server output and handle process exit"""
-        while self.server_process:
-            # Read output line by line
-            output = self.server_process.stdout.readline()
-            if output:
-                print(f"Server: {output.strip()}")
-            
-            # Check if process has exited
-            if self.server_process.poll() is not None:
-                # Process has terminated
-                if self.server_running:
-                    # If we thought it was running, it crashed
-                    self.server_running = False
+        process_ref = self.server_process  # Create a local reference
+        while process_ref and process_ref.poll() is None:
+            try:
+                # Read output line by line
+                output = process_ref.stdout.readline()
+                if output:
+                    print(f"Server: {output.strip()}")
+                
+                # Check if the server_process reference has changed (happens when stop_server is called)
+                if self.server_process is None or self.server_process != process_ref:
+                    break
                     
-                    # Update UI on main thread
-                    rumps.App.notification(
-                        title="Jam Deck",
-                        subtitle="Server Stopped Unexpectedly", 
-                        message="Check log for details.",
-                        sound=False
-                    )
-                    
-                    # Update menu state on main thread
-                    def update():
-                        self.update_menu_state()
-                    rumps.Timer(0, update).start()
+            except (AttributeError, ValueError):
+                # Handle possible errors if process is terminated during reading
                 break
+                
+        # Only send notification if we didn't expect the process to end
+        if self.server_running:
+            # If we thought it was running, it crashed
+            self.server_running = False
+            
+            # Update UI on main thread
+            rumps.App.notification(
+                title="Jam Deck",
+                subtitle="Server Stopped Unexpectedly", 
+                message="Check log for details.",
+                sound=False
+            )
+            
+            # Update menu state on main thread
+            def update():
+                self.update_menu_state()
+            rumps.Timer(0, update).start()
 
     def open_browser(self, _):
         """Open overlay in default browser"""
