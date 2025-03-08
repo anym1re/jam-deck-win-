@@ -10,7 +10,7 @@ import signal
 import atexit
 
 # Version information
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 # Set port for the server
 PORT = 8080
