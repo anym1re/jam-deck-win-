@@ -410,17 +410,74 @@
         let containerVisible = true;
         let errorCount = 0;
         
+        // Parse URL parameters
+        function getUrlParams() {
+            const params = {};
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            
+            // Get scene parameter
+            const scene = urlParams.get('scene');
+            if (scene) {
+                params.scene = scene;
+            }
+            
+            return params;
+        }
+        
+        // Get URL parameters
+        const urlParams = getUrlParams();
+        const currentScene = urlParams.scene || 'default';
+        
+        // Get scene-specific setting from localStorage with fallback
+        function getSceneStorage(key, defaultValue) {
+            // Try to get scene-specific setting first
+            const sceneSpecific = localStorage.getItem(`${currentScene}_${key}`);
+            if (sceneSpecific !== null) {
+                return sceneSpecific;
+            }
+            
+            // Fall back to global setting if available
+            const global = localStorage.getItem(key);
+            if (global !== null) {
+                return global;
+            }
+            
+            // Use default value if nothing is stored
+            return defaultValue;
+        }
+        
+        // Save setting with scene-specific storage
+        function setSceneStorage(key, value) {
+            localStorage.setItem(`${currentScene}_${key}`, value);
+        }
+        
         // Theme selection
         const themeButtons = document.querySelectorAll('.theme-btn[data-theme]');
         const widthButtons = document.querySelectorAll('.width-toggle');
         const container = document.querySelector('.overlay-container');
         
+        // Migration: Copy global settings to default scene if needed
+        if (currentScene === 'default' && localStorage.getItem('musicPlayerTheme') !== null && 
+            localStorage.getItem('default_musicPlayerTheme') === null) {
+            
+            // Migrate theme setting
+            if (localStorage.getItem('musicPlayerTheme')) {
+                localStorage.setItem('default_musicPlayerTheme', localStorage.getItem('musicPlayerTheme'));
+            }
+            
+            // Migrate width setting
+            if (localStorage.getItem('musicPlayerWidth')) {
+                localStorage.setItem('default_musicPlayerWidth', localStorage.getItem('musicPlayerWidth'));
+            }
+        }
+        
         // Get saved theme or use default
-        const savedTheme = localStorage.getItem('musicPlayerTheme') || 'polar';
+        const savedTheme = getSceneStorage('musicPlayerTheme', 'polar');
         document.body.className = `theme-${savedTheme}`;
         
         // Get saved width setting or use default
-        const savedWidth = localStorage.getItem('musicPlayerWidth') || 'auto';
+        const savedWidth = getSceneStorage('musicPlayerWidth', 'auto');
         if (savedWidth === 'full') {
             container.classList.remove('width-auto');
             container.classList.add('width-full');
@@ -458,8 +515,8 @@
                 themeButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                // Save selection
-                localStorage.setItem('musicPlayerTheme', theme);
+                // Save selection with scene context
+                setSceneStorage('musicPlayerTheme', theme);
             });
         });
         
@@ -481,8 +538,8 @@
                 widthButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                // Save selection
-                localStorage.setItem('musicPlayerWidth', width);
+                // Save selection with scene context
+                setSceneStorage('musicPlayerWidth', width);
             });
         });
         
@@ -616,6 +673,13 @@
                     showDebugError('Error fetching now playing info', error);
                 }
             });
+        }
+        
+        // If in debug mode, show the current scene in console
+        if (debugMode) {
+            console.log(`Current scene: ${currentScene}`);
+            console.log(`Theme for this scene: ${savedTheme}`);
+            console.log(`Width for this scene: ${savedWidth}`);
         }
         
         // Update immediately and then at regular intervals
