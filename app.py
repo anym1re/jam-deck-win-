@@ -22,23 +22,20 @@ class JamDeckApp(rumps.App):
         self.scenes = self.load_scenes()
         self.current_scene = self.scenes[0] if self.scenes else "default"
         
-        # Configure menu items
+        # Configure all menu items at once
+        server_item = rumps.MenuItem("Start Server", callback=self.toggle_server)
+        scenes_menu = self.create_scenes_menu()
+        
         self.menu = [
-            rumps.MenuItem("Start Server", callback=self.toggle_server),
+            server_item,
             None,  # Separator
-        ]
-        
-        # Setup scenes menu
-        self.setup_scenes_menu()
-        
-        # Add remaining menu items
-        self.menu.extend([
+            scenes_menu,
             None,  # Separator
             rumps.MenuItem("Open in Browser", callback=self.open_browser),
             rumps.MenuItem("Copy Source URL", callback=self.copy_source_url),
             None,  # Separator
             rumps.MenuItem("About", callback=self.show_about)
-        ])
+        ]
         
         # Update menu text based on current state
         self.update_menu_state()
@@ -239,12 +236,8 @@ class JamDeckApp(rumps.App):
         except Exception as e:
             rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}")
 
-    def setup_scenes_menu(self):
-        """Set up the scenes submenu"""
-        # First, remove old scenes menu if it exists
-        if "Scenes" in self.menu:
-            self.menu.pop("Scenes")
-            
+    def create_scenes_menu(self):
+        """Create the scenes submenu"""
         # Create scenes submenu
         scenes_menu = rumps.MenuItem("Scenes")
         
@@ -260,8 +253,19 @@ class JamDeckApp(rumps.App):
         scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
         scenes_menu.add(rumps.MenuItem("Manage Scenes...", callback=self.manage_scenes))
         
-        # Add scenes menu to main menu (after the first separator)
-        self.menu.insert_after(self.menu.items()[1], scenes_menu)
+        return scenes_menu
+        
+    def rebuild_scenes_menu(self):
+        """Rebuild the scenes menu after changes"""
+        if "Scenes" in self.menu:
+            # Create new scenes menu
+            new_scenes_menu = self.create_scenes_menu()
+            
+            # Replace existing menu
+            index = self.menu._menu.indexOfItemWithTitle_("Scenes")
+            if index != -1:
+                self.menu._menu.removeItemAtIndex_(index)
+                self.menu._menu.insertItem_atIndex_(new_scenes_menu._menuitem, index)
     
     def select_scene(self, sender):
         """Handle scene selection"""
@@ -304,7 +308,7 @@ class JamDeckApp(rumps.App):
             self.save_scenes()
             
             # Rebuild scenes menu
-            self.setup_scenes_menu()
+            self.rebuild_scenes_menu()
 
     def manage_scenes(self, _):
         """Open scene management window"""
@@ -360,7 +364,7 @@ class JamDeckApp(rumps.App):
             i += 1
         
         # Rebuild scenes menu
-        self.setup_scenes_menu()
+        self.rebuild_scenes_menu()
 
 if __name__ == "__main__":
     app = JamDeckApp()
