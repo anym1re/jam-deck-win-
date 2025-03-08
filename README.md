@@ -119,7 +119,7 @@ Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 **Note about Settings Storage**: Theme and width preferences are stored separately in each browser's local storage. This means settings selected in your regular browser (Chrome, Safari, etc.) won't automatically appear in OBS. You'll need to configure your preferred settings once in each environment where you use Jam Deck.
 
 **Font Attribution**: 
-- The Retro theme uses Press Start 2P font by CodeMan38 (licensed under SIL Open Font License), with Retro Gaming font as fallback
+- The Retro theme uses Press Start 2P font by CodeMan38 (licensed under SIL Open Font License), with Retro Gaming font by Daymarius as fallback.
 - The High Contrast theme uses Atkinson Hyperlegible font designed by the Braille Institute for improved readability.
 
 ### Width Options
@@ -164,7 +164,7 @@ If you're using the manual installation:
    - Save as "Start Jam Deck"
 
 2. Add to Login Items:
-   - System Preferences → Users & Groups → Login Items
+   - System Preferences → Users & Groups → Login Items.
    - Add the Automator application you created.
 
 ## Customization
