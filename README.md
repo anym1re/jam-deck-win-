@@ -13,7 +13,7 @@ A customizable Apple Music now playing display for macOS.
 ## Features
 
 - Shows currently playing Apple Music track on your stream.
-- Five beautiful themes (Natural, Twitch, Dark, Pink, Light).
+- Ten beautiful themes (5 rounded: Natural, Twitch, Dark, Pink, Light and 5 square: Transparent, Neon, Terminal, Retro, High Contrast).
 - Adaptive or Fixed width display options.
 - Automatically hides when no music is playing.
 - Support for album artwork.
@@ -102,13 +102,23 @@ To add Jam Deck to your OBS scene:
 
 Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 
+#### Rounded Themes
 - **Natural** (default): Soft green theme with rounded corners.
 - **Twitch**: Dark purple theme that matches Twitch aesthetics.
 - **Dark**: Sleek black theme with cyan accents.
 - **Pink**: Vibrant pink theme with friendly typography.
 - **Light**: Clean white theme with blue accents.
 
+#### Square Themes
+- **Transparent**: Minimalist theme with no background, just text and controls.
+- **Neon**: Cyberpunk-inspired theme with glowing cyan text on black background.
+- **Terminal**: Green-on-black theme reminiscent of classic computer terminals.
+- **Retro**: Blue and yellow theme using pixel-style Retro Gaming font.
+- **High Contrast**: Black and white theme optimized for maximum readability.
+
 **Note about Settings Storage**: Theme and width preferences are stored separately in each browser's local storage. This means settings selected in your regular browser (Chrome, Safari, etc.) won't automatically appear in OBS. You'll need to configure your preferred settings once in each environment where you use Jam Deck.
+
+**Font Attribution**: The Retro theme uses the Retro Gaming font created by Daymarius, available at [dafont.com/retro-gaming.font](https://www.dafont.com/retro-gaming.font).
 
 ### Width Options
 
