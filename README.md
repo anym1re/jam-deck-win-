@@ -68,7 +68,7 @@ To add Jam Deck to your OBS scene:
 4. Choose `Create New` and give it a name (e.g., "Now Playing Music")
 5. Click `OK`
 6. In the Browser Source properties:
-   - URL: `http://localhost:8080/` or use the app to copy a scene-specific URL
+   - URL: Use the app to copy a scene-specific URL, or use `http://localhost:8080/`
    - Width: 400 (recommended minimum)
    - Height: 140
    - Check "Refresh browser when scene becomes active"
@@ -97,7 +97,7 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
 
 2. **Scene Management**
    - Under "Copy Scene URL," select any scene to copy its URL to the clipboard.
-   - Each scene can have its own saved theme and width settings.
+   - Each scene can have its own saved theme and width settings within each browser. 
    - Use "Add New Scene..." to create custom scenes for different parts of your stream.
    - Use "Manage Scenes..." to rename or delete existing scenes.
 
@@ -110,6 +110,7 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
 4. **OBS Setup**
    - Copy scene URLs directly from the menu.
    - Paste into OBS Browser Source properties.
+   - See [Setting Up OBS](#setting-up-obs).
 
 The menu bar app stores your preferences between sessions, so your auto-open setting and scenes will be remembered when you restart.
 
@@ -123,6 +124,8 @@ Hover over the overlay to reveal the settings menu at the bottom:
 - **Dark**: Sleek black theme with cyan accents.
 - **Pink**: Vibrant pink theme with friendly typography.
 - **Light**: Clean white theme with blue accents.
+
+**Note about Settings Storage**: Theme and width preferences are stored separately in each browser's local storage. This means settings selected in your regular browser (Chrome, Safari, etc.) won't automatically appear in OBS. You'll need to configure your preferred settings once in each environment where you use Jam Deck.
 
 ### Width Options
 
