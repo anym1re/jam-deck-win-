@@ -12,7 +12,7 @@ if os.path.exists(libffi_source) and not os.path.exists(libffi_dest):
 
 APP = ['app.py']
 DATA_FILES = [
-    ('', ['overlay.html', 'jamdeck.icns', 'music_server.py']),  # Required files
+    ('', ['overlay.html', 'jamdeck.icns', 'jamdeck-template.png', 'music_server.py']),  # Required files
     ('Frameworks', ['libffi.8.dylib']),  # Include libffi in the Frameworks directory
 ]
 OPTIONS = {
