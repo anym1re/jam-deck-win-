@@ -117,7 +117,7 @@ The menu bar app stores your preferences between sessions, so your auto-open set
 
 ### Theme Selection
 
-Hover over the overlay to reveal the settings menu at the bottom:
+Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 
 - **Natural** (default): Soft green theme with rounded corners.
 - **Twitch**: Dark purple theme that matches Twitch aesthetics.
