@@ -30,6 +30,7 @@ A customizable Apple Music now playing display for macOS.
 1. Download the latest Jam Deck.app from the Releases page.
 2. Move to your Applications folder.
 3. Launch Jam Deck from your Applications folder.
+   - If you see a warning about an app from an unidentified developer, see [Apple's guide on opening such apps](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
 4. The app will appear in your menu bar with a musical note icon.
 5. The server starts automatically when you launch the app.
 
