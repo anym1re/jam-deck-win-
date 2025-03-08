@@ -7,14 +7,14 @@ A customizable Apple Music now playing display for macOS.
 ## Features
 
 - Shows currently playing Apple Music track on your stream
-- Five beautiful themes (Polar Bear Cafe, Twitch, Dark, Pink, Light)
-- Auto-width or full-width display options
+- Five beautiful themes (Natural, Twitch, Dark, Pink, Light)
+- Adaptive or Fixed width display options
 - Automatically hides when no music is playing
 - Support for album artwork
 - Clean animated transitions between songs
 - Font changes with each theme for a complete visual experience
 - Settings menu appears only on hover (invisible to viewers)
-- Settings are saved between sessions
+- Scene-specific settings saved between sessions (use ?scene=scenename in URL)
 
 ## Requirements
 
@@ -41,7 +41,7 @@ A customizable Apple Music now playing display for macOS.
    ```
 
 4. Add a Browser Source in OBS:
-   - URL: `http://localhost:8080/`
+   - URL: `http://localhost:8080/` or `http://localhost:8080/?scene=scenename` for scene-specific settings
    - Width: 400 (recommended minimum)
    - Height: 140
    - Check "Refresh browser when scene becomes active"
@@ -55,7 +55,7 @@ Once installed, the overlay will automatically display your currently playing Ap
 
 Hover over the overlay to reveal the settings menu at the bottom:
 
-- **Polar Bear Cafe** (default): Soft green theme with rounded corners
+- **Natural** (default): Soft green theme with rounded corners
 - **Twitch**: Dark purple theme that matches Twitch aesthetics
 - **Dark**: Sleek black theme with cyan accents
 - **Pink**: Vibrant pink theme with friendly typography
@@ -65,8 +65,8 @@ Hover over the overlay to reveal the settings menu at the bottom:
 
 In the settings menu:
 
-- **A**: Auto width (only as wide as needed for the text)
-- **F**: Full width (expands to fill the entire browser source width)
+- **A**: Adaptive width (only as wide as needed for the text)
+- **F**: Fixed width (expands to fill the entire browser source width, default)
 
 
 ## Troubleshooting
@@ -116,5 +116,5 @@ By default, the server runs on port 8080. To change this:
 
 ## Acknowledgements
 
-- "Polar Bear Cafe" theme is inspired by the aesthetic of Polar Bear Cafe anime
+- "Natural" theme (formerly "Polar Bear Cafe") is inspired by natural, earthy aesthetics
 - Created as a lightweight alternative to other music display solutions
