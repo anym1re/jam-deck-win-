@@ -72,7 +72,8 @@ class JamDeckApp(rumps.App):
                     [python_path, server_path],
                     stdout=subprocess.PIPE, 
                     stderr=subprocess.STDOUT,
-                    text=True
+                    text=True,
+                    encoding='utf-8'
                 )
                 
                 # Monitor the server output in a separate thread
@@ -328,11 +329,13 @@ class JamDeckApp(rumps.App):
             # Show options
             response = rumps.Window(
                 title=f"Scene: {scene}",
-                message="Options:",
-                buttons=["Keep", "Rename", "Delete"]
+                message="Options for this scene:",
+                ok="Keep", 
+                cancel="Delete",
+                other="Rename"
             ).run()
             
-            if response.clicked == 1:  # Rename
+            if response.clicked == 2:  # Rename (other button)
                 new_name = rumps.Window(
                     title="Rename Scene",
                     message=f"Enter new name for '{scene}':",
@@ -351,7 +354,7 @@ class JamDeckApp(rumps.App):
                     if self.current_scene == scene:
                         self.current_scene = sanitized_name
             
-            elif response.clicked == 2:  # Delete
+            elif response.clicked == 0:  # Delete (cancel button)
                 # If current scene is being deleted, switch to default
                 if self.current_scene == scene:
                     self.current_scene = "default"
