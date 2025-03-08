@@ -2,7 +2,7 @@
 
 A customizable Apple Music now playing display for macOS.
 
-![Jam Deck](preview.png)
+![Jam Deck](assets/images/preview.png)
 
 ## Quick Links
 - [Download](https://github.com/detekoi/jam-deck/releases/)

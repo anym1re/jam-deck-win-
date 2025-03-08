@@ -12,7 +12,8 @@ if os.path.exists(libffi_source) and not os.path.exists(libffi_dest):
 
 APP = ['app.py']
 DATA_FILES = [
-    ('', ['overlay.html', 'jamdeck.icns', 'jamdeck-template.png', 'music_server.py']),  # Required files
+    ('', ['overlay.html', 'music_server.py']),  # Required files
+    ('assets/images', ['assets/images/jamdeck.icns', 'assets/images/jamdeck-template.png']),  # Image assets
     ('Frameworks', ['libffi.8.dylib']),  # Include libffi in the Frameworks directory
 ]
 OPTIONS = {
@@ -32,7 +33,7 @@ OPTIONS = {
         'LSUIElement': True,  # Makes the app a background agent with no dock icon
         'LSBackgroundOnly': False,  # Allows menu bar icon
     },
-    'iconfile': 'jamdeck.icns',
+    'iconfile': 'assets/images/jamdeck.icns',
     'extra_scripts': ['collect_zmq.py'],
 }
 

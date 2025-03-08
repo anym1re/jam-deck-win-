@@ -10,7 +10,7 @@ import json
 class JamDeckApp(rumps.App):
     def __init__(self):
         # Path to menu bar icon (template means it adapts to light/dark mode)
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jamdeck-template.png")
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets/images/jamdeck-template.png")
         
         super(JamDeckApp, self).__init__("Jam Deck", icon=icon_path, template=True)
         
