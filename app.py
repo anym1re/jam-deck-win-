@@ -241,6 +241,10 @@ class JamDeckApp(rumps.App):
 
     def setup_scenes_menu(self):
         """Set up the scenes submenu"""
+        # First, remove old scenes menu if it exists
+        if "Scenes" in self.menu:
+            self.menu.pop("Scenes")
+            
         # Create scenes submenu
         scenes_menu = rumps.MenuItem("Scenes")
         
@@ -256,8 +260,8 @@ class JamDeckApp(rumps.App):
         scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
         scenes_menu.add(rumps.MenuItem("Manage Scenes...", callback=self.manage_scenes))
         
-        # Add scenes menu to main menu
-        self.menu.append(scenes_menu)
+        # Add scenes menu to main menu (after the first separator)
+        self.menu.insert_after(self.menu.items()[1], scenes_menu)
     
     def select_scene(self, sender):
         """Handle scene selection"""
