@@ -4,22 +4,11 @@ A customizable Apple Music now playing display for macOS.
 
 ![Jam Deck](preview.png)
 
-## Table of Contents
-- [Features](#features)
-- [Requirements](#requirements)
+## Quick Links
+- [Download](https://github.com/detekoi/jam-deck/releases/)
 - [Installation](#installation)
-  - [Option 1: Menu Bar App](#option-1-menu-bar-app-recommended)
-  - [Option 2: Manual Installation](#option-2-manual-installation)
-  - [Setting Up OBS](#setting-up-obs)
-- [Usage](#usage)
-  - [Menu Bar App](#menu-bar-app)
-  - [Theme Selection](#theme-selection)
-  - [Width Options](#width-options)
-- [Troubleshooting](#troubleshooting)
-- [Auto-Start on Boot](#auto-start-on-boot)
-- [Customization](#customization)
-- [Building from Source](#building-from-source)
-- [License](#license)
+- [Setting Up OBS](#setting-up-obs)
+- [Theme Selection](#theme-selection)
 
 ## Features
 
@@ -71,11 +60,38 @@ A customizable Apple Music now playing display for macOS.
 
 ### Setting Up OBS
 
-Add a Browser Source in OBS:
-- URL: `http://localhost:8080/` or use the app to copy a scene-specific URL
-- Width: 400 (recommended minimum)
-- Height: 140
-- Check "Refresh browser when scene becomes active"
+To add Jam Deck to your OBS scene:
+
+1. In OBS Studio, select the scene where you want to display your music
+2. In the Sources panel, click the `+` button
+3. Select `Browser` from the list of sources
+4. Choose `Create New` and give it a name (e.g., "Now Playing Music")
+5. Click `OK`
+6. In the Browser Source properties:
+   - URL: `http://localhost:8080/` or use the app to copy a scene-specific URL
+   - Width: 400 (recommended minimum)
+   - Height: 140
+   - Check "Refresh browser when scene becomes active"
+7. Click `OK` to add the browser source
+
+#### Changing Theme and Width Settings
+
+There are two ways to customize your overlay:
+
+1. **In-stream settings** (hover method):
+   - Hover over the overlay during preview or edit mode
+   - Use the settings panel that appears at the bottom
+   - Changes are saved for that specific scene URL
+
+2. **Right-click method** (recommended):
+   - Right-click on the Browser Source in OBS
+   - Select `Interact`
+   - A new window will open showing the overlay
+   - Hover over the overlay to access the settings menu
+   - Select your preferred theme and width option
+   - Changes are saved automatically
+
+**Tip**: Using the `Interact` method makes it easier to access settings without having to position your mouse precisely over the small overlay in your main OBS window.
 
 ## Usage
 
@@ -129,8 +145,8 @@ In the settings menu:
 ## Troubleshooting
 
 **No music information appears:**
+- Make sure the server is running.
 - Make sure Apple Music is running.
-- Check Terminal for error messages.
 - Try playing/pausing music to trigger an update.
 
 **Permission errors:**
