@@ -8,6 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Inter:wght@400;700&family=Poppins:wght@400;700&family=Quicksand:wght@400;700&family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom font for Retro theme -->
+    <style>
+        @font-face {
+            font-family: 'Retro Gaming';
+            src: url('/assets/fonts/Retro-Gaming.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
     <style>
         /* Base styles */
         body {
@@ -150,6 +159,16 @@
         .theme-btn.active {
             border-color: white;
             box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Square theme buttons */
+        .theme-btn.square-btn {
+            border-radius: 0;
+            margin: 2px;
+        }
+
+        .theme-btn.square-btn.active {
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
         }
         
         .width-toggle {
@@ -356,18 +375,196 @@
             border: 1px solid #ffcdd2;
             color: #d32f2f;
         }
+        
+        /* Transparent Theme */
+        .theme-transparent {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .theme-transparent .music-container {
+            background-color: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+        }
+
+        .theme-transparent .note-icon {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border-radius: 0;
+        }
+
+        .theme-transparent .song-title {
+            color: white;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+        }
+
+        .theme-transparent .song-artist {
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+        }
+        
+        .theme-transparent .error-container {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Neon Theme */
+        .theme-neon {
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        .theme-neon .music-container {
+            background-color: rgba(10, 10, 20, 0.85);
+            border: 2px solid #0ff;
+            border-radius: 0;
+            box-shadow: 0 0 8px #0ff;
+        }
+
+        .theme-neon .note-icon {
+            background-color: #000;
+            color: #0ff;
+            border-radius: 0;
+            border: 1px solid #0ff;
+        }
+
+        .theme-neon .song-title {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        .theme-neon .song-artist {
+            color: #ff00ff;
+        }
+        
+        .theme-neon .error-container {
+            background-color: rgba(10, 10, 20, 0.85);
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+        }
+
+        /* Terminal Theme */
+        .theme-terminal {
+            font-family: 'Courier New', monospace;
+        }
+
+        .theme-terminal .music-container {
+            background-color: #000;
+            border: 1px solid #00ff00;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .theme-terminal .note-icon {
+            background-color: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 0;
+        }
+
+        .theme-terminal .song-title {
+            color: #00ff00;
+        }
+
+        .theme-terminal .song-artist {
+            color: #00bb00;
+        }
+        
+        .theme-terminal .error-container {
+            background-color: #000;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        /* Retro Theme */
+        .theme-retro {
+            font-family: 'Retro Gaming', monospace;
+        }
+
+        .theme-retro .music-container {
+            background-color: #0000aa;
+            border: 4px solid #ffff00;
+            padding: 6px 16px;
+            border-radius: 0;
+        }
+
+        .theme-retro .note-icon {
+            background-color: #000;
+            color: #fff;
+            border-radius: 0;
+        }
+
+        .theme-retro .song-title {
+            color: #ffffff;
+        }
+
+        .theme-retro .song-artist {
+            color: #ffff00;
+        }
+        
+        .theme-retro .error-container {
+            background-color: #0000aa;
+            border: 4px solid #ffff00;
+            color: #ffff00;
+        }
+
+        /* High Contrast Theme */
+        .theme-highcontrast {
+            font-family: 'Arial', sans-serif;
+        }
+
+        .theme-highcontrast .music-container {
+            background-color: #000;
+            border: 2px solid #fff;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .theme-highcontrast .note-icon {
+            background-color: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 0;
+        }
+
+        .theme-highcontrast .song-title {
+            color: #fff;
+            font-weight: bold;
+            font-size: 120%;
+        }
+
+        .theme-highcontrast .song-artist {
+            color: #fff;
+            font-size: 110%;
+        }
+        
+        .theme-highcontrast .error-container {
+            background-color: #000;
+            border: 2px solid #fff;
+            color: #fff;
+        }
     </style>
 </head>
 <body class="theme-natural">
     <div class="overlay-container width-fixed">
         <!-- Theme selector (appears on hover) -->
         <div class="theme-selector">
-            <!-- Theme buttons -->
+            <!-- Original rounded theme buttons -->
             <div class="theme-btn active" data-theme="natural" style="background-color: #6d9b78;" title="Natural"></div>
             <div class="theme-btn" data-theme="twitch" style="background-color: rgb(100, 65, 164);" title="Twitch"></div>
             <div class="theme-btn" data-theme="dark" style="background-color: #121212;" title="Dark"></div>
             <div class="theme-btn" data-theme="pink" style="background-color: #ff7ebc;" title="Pink"></div>
             <div class="theme-btn" data-theme="light" style="background-color: #ffffff;" title="Light"></div>
+            
+            <!-- New square theme buttons -->
+            <div style="margin-left: 8px; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 8px; display: flex; gap: 4px;">
+                <div class="theme-btn square-btn" data-theme="transparent" style="background-color: transparent; border: 1px dashed #ffffff;" title="Transparent"></div>
+                <div class="theme-btn square-btn" data-theme="neon" style="background-color: #000; border: 2px solid #0ff;" title="Neon"></div>
+                <div class="theme-btn square-btn" data-theme="terminal" style="background-color: #000; border: 1px solid #0f0;" title="Terminal"></div>
+                <div class="theme-btn square-btn" data-theme="retro" style="background-color: #00f; border: 2px solid #ff0;" title="Retro"></div>
+                <div class="theme-btn square-btn" data-theme="highcontrast" style="background-color: #000; border: 2px solid #fff;" title="High Contrast"></div>
+            </div>
             
             <!-- Width toggle button -->
             <div style="margin-left: 8px; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 8px;">
