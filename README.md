@@ -4,6 +4,23 @@ A customizable Apple Music now playing display for macOS.
 
 ![Jam Deck](preview.png)
 
+## Table of Contents
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [Option 1: Menu Bar App](#option-1-menu-bar-app-recommended)
+  - [Option 2: Manual Installation](#option-2-manual-installation)
+  - [Setting Up OBS](#setting-up-obs)
+- [Usage](#usage)
+  - [Menu Bar App](#menu-bar-app)
+  - [Theme Selection](#theme-selection)
+  - [Width Options](#width-options)
+- [Troubleshooting](#troubleshooting)
+- [Auto-Start on Boot](#auto-start-on-boot)
+- [Customization](#customization)
+- [Building from Source](#building-from-source)
+- [License](#license)
+
 ## Features
 
 - Shows currently playing Apple Music track on your stream.
