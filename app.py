@@ -101,13 +101,15 @@ class JamDeckApp(rumps.App):
                 rumps.notification(
                     title="Jam Deck",
                     subtitle="Server Started", 
-                    message="Now playing overlay is active!"
+                    message="Now playing overlay is active!",
+                    sound=False
                 )
             except Exception as e:
                 rumps.notification(
                     title="Jam Deck",
                     subtitle="Error Starting Server", 
-                    message=str(e)
+                    message=str(e),
+                    sound=False
                 )
 
     def stop_server(self):
@@ -124,13 +126,15 @@ class JamDeckApp(rumps.App):
                 rumps.notification(
                     title="Jam Deck",
                     subtitle="Server Stopped", 
-                    message="Overlay is no longer available."
+                    message="Overlay is no longer available.",
+                    sound=False
                 )
             except Exception as e:
                 rumps.notification(
                     title="Jam Deck",
                     subtitle="Error Stopping Server", 
-                    message=str(e)
+                    message=str(e),
+                    sound=False
                 )
 
     def monitor_server(self):
@@ -152,7 +156,8 @@ class JamDeckApp(rumps.App):
                     rumps.App.notification(
                         title="Jam Deck",
                         subtitle="Server Stopped Unexpectedly", 
-                        message="Check log for details."
+                        message="Check log for details.",
+                        sound=False
                     )
                     
                     # Update menu state on main thread
@@ -169,7 +174,8 @@ class JamDeckApp(rumps.App):
             rumps.notification(
                 title="Jam Deck",
                 subtitle="Error", 
-                message=f"Could not open browser: {str(e)}"
+                message=f"Could not open browser: {str(e)}",
+                sound=False
             )
 
     def server_not_running(self, _):
@@ -177,7 +183,8 @@ class JamDeckApp(rumps.App):
         rumps.notification(
             title="Jam Deck",
             subtitle="Server Not Running", 
-            message="Start the server first."
+            message="Start the server first.",
+            sound=False
         )
         
     def open_documentation(self, _):
@@ -188,7 +195,8 @@ class JamDeckApp(rumps.App):
             rumps.notification(
                 title="Jam Deck",
                 subtitle="Error", 
-                message=f"Could not open documentation: {str(e)}"
+                message=f"Could not open documentation: {str(e)}",
+                sound=False
             )
             
     def show_about(self, _):
@@ -226,7 +234,7 @@ class JamDeckApp(rumps.App):
                 for scene in self.scenes:
                     f.write(f"{scene}\n")
         except Exception as e:
-            rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}")
+            rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}", sound=False)
             
 
     def create_copy_scenes_menu(self):
@@ -281,13 +289,15 @@ class JamDeckApp(rumps.App):
             rumps.notification(
                 title="Jam Deck",
                 subtitle="URL Copied",
-                message=f"OBS source URL for scene '{scene_name}' copied to clipboard"
+                message=f"OBS source URL for scene '{scene_name}' copied to clipboard",
+                sound=False
             )
         except Exception as e:
             rumps.notification(
                 title="Jam Deck",
                 subtitle="Error",
-                message=f"Could not copy URL: {str(e)}"
+                message=f"Could not copy URL: {str(e)}",
+                sound=False
             )
 
     def add_new_scene(self, _):
