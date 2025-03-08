@@ -9,6 +9,9 @@ import zmq
 import signal
 import atexit
 
+# Version information
+VERSION = "1.1.1"
+
 # Set port for the server
 PORT = 8080
 
@@ -302,5 +305,5 @@ def run_server():
 if __name__ == '__main__':
     # Force output buffering off for better debugging
     sys.stdout.reconfigure(line_buffering=True)
-    print("Music Now Playing Server (Debug Mode)")
+    print(f"Jam Deck v{VERSION} - Music Now Playing Server")
     run_server()
