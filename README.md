@@ -26,7 +26,6 @@ A customizable Apple Music now playing display for macOS.
 ## Requirements
 
 - macOS (uses AppleScript to communicate with Apple Music).
-- Python 3.6 or later.
 - OBS Studio or similar streaming software with browser source support.
 
 ## Installation
@@ -42,6 +41,10 @@ A customizable Apple Music now playing display for macOS.
 
 ### Option 2: Manual Installation
 
+**Requirements:**
+- Python 3.6 or later
+
+Steps:
 1. Clone this repository:
    ```
    git clone https://github.com/yourusername/jam-deck.git
@@ -170,6 +173,10 @@ By default, the server runs on port 8080. To change this (Manual installation on
 5. Update your browser source URL in OBS to use the new port.
 
 ## Building from Source
+
+**Requirements:**
+- Python 3.6 or later
+- macOS 10.14 or later
 
 If you want to build the Jam Deck menu bar app from source:
 
