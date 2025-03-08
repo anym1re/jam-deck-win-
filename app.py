@@ -20,19 +20,17 @@ class JamDeckApp(rumps.App):
         
         # Load saved scenes
         self.scenes = self.load_scenes()
-        self.current_scene = self.scenes[0] if self.scenes else "default"
         
         # Configure all menu items at once
         server_item = rumps.MenuItem("Start Server", callback=self.toggle_server)
-        scenes_menu = self.create_scenes_menu()
+        copy_scenes_menu = self.create_copy_scenes_menu()
         
         self.menu = [
             server_item,
             None,  # Separator
-            scenes_menu,
+            copy_scenes_menu,
             None,  # Separator
             rumps.MenuItem("Open in Browser", callback=self.open_browser),
-            rumps.MenuItem("Copy Source URL", callback=self.copy_source_url),
             None,  # Separator
             rumps.MenuItem("About", callback=self.show_about)
         ]
@@ -171,33 +169,6 @@ class JamDeckApp(rumps.App):
             message="Start the server first."
         )
 
-    def copy_source_url(self, _):
-        """Copy source URL to clipboard with current scene parameter"""
-        try:
-            import subprocess
-            # Base URL
-            base_url = "http://localhost:8080"
-            
-            # Add scene parameter if not default
-            if self.current_scene and self.current_scene != "default":
-                url = f"{base_url}/?scene={self.current_scene}"
-            else:
-                url = base_url
-            
-            # Copy URL to clipboard using pbcopy
-            subprocess.run("pbcopy", text=True, input=url)
-            
-            rumps.notification(
-                title="Jam Deck",
-                subtitle="URL Copied",
-                message=f"OBS source URL for scene '{self.current_scene}' copied to clipboard"
-            )
-        except Exception as e:
-            rumps.notification(
-                title="Jam Deck",
-                subtitle="Error",
-                message=f"Could not copy URL: {str(e)}"
-            )
 
     def show_about(self, _):
         """Show about dialog"""
@@ -237,55 +208,63 @@ class JamDeckApp(rumps.App):
         except Exception as e:
             rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}")
 
-    def create_scenes_menu(self):
-        """Create the scenes submenu"""
-        # Create scenes submenu
-        scenes_menu = rumps.MenuItem("Scenes")
+    def create_copy_scenes_menu(self):
+        """Create the copy scenes submenu"""
+        # Create copy scenes submenu
+        copy_scenes_menu = rumps.MenuItem("Copy Scene URL")
         
         # Add each scene as a menu item
         for scene in self.scenes:
-            item = rumps.MenuItem(scene, callback=self.select_scene)
-            if scene == self.current_scene:
-                item.state = True
-            scenes_menu.add(item)
+            item = rumps.MenuItem(scene, callback=self.copy_scene_url)
+            copy_scenes_menu.add(item)
         
         # Add separator and management options
-        scenes_menu.add(None)  # Separator
-        scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
-        scenes_menu.add(rumps.MenuItem("Manage Scenes...", callback=self.manage_scenes))
+        copy_scenes_menu.add(None)  # Separator
+        copy_scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
+        copy_scenes_menu.add(rumps.MenuItem("Manage Scenes...", callback=self.manage_scenes))
         
-        return scenes_menu
+        return copy_scenes_menu
         
-    def rebuild_scenes_menu(self):
-        """Rebuild the scenes menu after changes"""
-        if "Scenes" in self.menu:
-            # Create new scenes menu
-            new_scenes_menu = self.create_scenes_menu()
+    def rebuild_copy_scenes_menu(self):
+        """Rebuild the copy scenes menu after changes"""
+        if "Copy Scene URL" in self.menu:
+            # Create new copy scenes menu
+            new_copy_scenes_menu = self.create_copy_scenes_menu()
             
             # Replace existing menu
-            index = self.menu._menu.indexOfItemWithTitle_("Scenes")
+            index = self.menu._menu.indexOfItemWithTitle_("Copy Scene URL")
             if index != -1:
                 self.menu._menu.removeItemAtIndex_(index)
-                self.menu._menu.insertItem_atIndex_(new_scenes_menu._menuitem, index)
+                self.menu._menu.insertItem_atIndex_(new_copy_scenes_menu._menuitem, index)
     
-    def select_scene(self, sender):
-        """Handle scene selection"""
-        # Uncheck all scenes
-        scenes_menu = self.menu["Scenes"]
-        for item in scenes_menu.values():
-            if isinstance(item, rumps.MenuItem) and not item.title.startswith("Add") and not item.title.startswith("Manage"):
-                item.state = False
-        
-        # Check selected scene
-        sender.state = True
-        self.current_scene = sender.title
-        
-        # Show notification
-        rumps.notification(
-            title="Jam Deck",
-            subtitle="Scene Changed",
-            message=f"Active scene: {self.current_scene}"
-        )
+    def copy_scene_url(self, sender):
+        """Copy the URL for the selected scene to clipboard"""
+        try:
+            import subprocess
+            # Base URL
+            base_url = "http://localhost:8080"
+            
+            # Add scene parameter if not default
+            scene_name = sender.title
+            if scene_name and scene_name != "default":
+                url = f"{base_url}/?scene={scene_name}"
+            else:
+                url = base_url
+            
+            # Copy URL to clipboard using pbcopy
+            subprocess.run("pbcopy", text=True, input=url)
+            
+            rumps.notification(
+                title="Jam Deck",
+                subtitle="URL Copied",
+                message=f"OBS source URL for scene '{scene_name}' copied to clipboard"
+            )
+        except Exception as e:
+            rumps.notification(
+                title="Jam Deck",
+                subtitle="Error",
+                message=f"Could not copy URL: {str(e)}"
+            )
 
     def add_new_scene(self, _):
         """Show dialog to add a new scene"""
@@ -308,8 +287,8 @@ class JamDeckApp(rumps.App):
             self.scenes.append(scene_name)
             self.save_scenes()
             
-            # Rebuild scenes menu
-            self.rebuild_scenes_menu()
+            # Rebuild copy scenes menu
+            self.rebuild_copy_scenes_menu()
 
     def manage_scenes(self, _):
         """Open scene management window"""
@@ -362,10 +341,6 @@ class JamDeckApp(rumps.App):
                     self.scenes[i] = sanitized_name
                     self.save_scenes()
                     
-                    # Update current_scene if it was renamed
-                    if self.current_scene == scene:
-                        self.current_scene = sanitized_name
-                    
                     i += 1
             else:  # Cancel button ("Delete")
                 # Confirm deletion
@@ -377,10 +352,6 @@ class JamDeckApp(rumps.App):
                 )
                 
                 if confirm != 1:  # Not OK button (so "Yes, Delete It")
-                    # If current scene is being deleted, switch to default
-                    if self.current_scene == scene:
-                        self.current_scene = "default"
-                    
                     # Remove the scene
                     self.scenes.remove(scene)
                     self.save_scenes()
@@ -392,8 +363,8 @@ class JamDeckApp(rumps.App):
             if i < len(self.scenes) and scene == self.scenes[i]:
                 i += 1
         
-        # Rebuild scenes menu
-        self.rebuild_scenes_menu()
+        # Rebuild copy scenes menu
+        self.rebuild_copy_scenes_menu()
 
 if __name__ == "__main__":
     app = JamDeckApp()
