@@ -21,7 +21,7 @@ A customizable Apple Music now playing display for macOS.
 - Settings menu appears only on hover (invisible to viewers).
 - Scene-specific settings saved between sessions.
 - Menu bar app for easy access to all controls.
-- One-click scene URL copying with optional auto-open in browser.
+- One-click scene URL copying for easy OBS setup.
 
 ## Requirements
 
@@ -81,9 +81,6 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
 
 3. **Browser Integration**
    - Click "Open in Browser" to preview how your overlay looks.
-   - Toggle "Auto-open URLs in Browser" to control whether scene URLs automatically open when copied:
-     - When enabled (✓): Copying a scene URL will also open it in your browser.
-     - When disabled: URLs are only copied to clipboard without opening.
 
 ## Setting Up OBS
 
