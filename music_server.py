@@ -178,6 +178,72 @@ class MusicHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b'Artwork not found')
                 
+        elif path.startswith('/assets/fonts/'):
+            # Extract the filename from the path
+            font_file = path.split('/')[-1]
+            font_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'assets', 'fonts', font_file)
+            
+            print(f"Serving font file: {font_path}")
+            
+            try:
+                # Open in binary mode for font files
+                with open(font_path, 'rb') as f:
+                    file_data = f.read()
+                
+                self.send_response(200)
+                # Set the correct MIME type for TTF fonts
+                self.send_header('Content-type', 'font/ttf')
+                # Allow caching for fonts (unlike dynamic content)
+                self.send_header('Cache-Control', 'max-age=86400')  # Cache for 24 hours
+                self.end_headers()
+                self.wfile.write(file_data)
+                print(f"Font file '{font_file}' served successfully")
+                
+            except Exception as e:
+                print(f"Error serving font file: {e}")
+                self.send_response(404)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(f'Font file not found: {str(e)}'.encode())
+                
+        elif path.startswith('/assets/images/'):
+            # Extract the filename from the path
+            image_file = path.split('/')[-1]
+            image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'assets', 'images', image_file)
+            
+            print(f"Serving image file: {image_path}")
+            
+            try:
+                # Open in binary mode for image files
+                with open(image_path, 'rb') as f:
+                    file_data = f.read()
+                
+                self.send_response(200)
+                # Set content type based on file extension
+                if image_file.lower().endswith('.png'):
+                    content_type = 'image/png'
+                elif image_file.lower().endswith(('.jpg', '.jpeg')):
+                    content_type = 'image/jpeg'
+                elif image_file.lower().endswith('.gif'):
+                    content_type = 'image/gif'
+                elif image_file.lower().endswith('.svg'):
+                    content_type = 'image/svg+xml'
+                else:
+                    content_type = 'application/octet-stream'
+                
+                self.send_header('Content-type', content_type)
+                self.send_header('Cache-Control', 'max-age=86400')  # Cache for 24 hours
+                self.end_headers()
+                self.wfile.write(file_data)
+                print(f"Image file '{image_file}' served successfully")
+                
+            except Exception as e:
+                print(f"Error serving image file: {e}")
+                self.send_response(404)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(f'Image file not found: {str(e)}'.encode())
+                
         elif path == '/' or path == '/index.html':
             print("Serving HTML overlay page")
             # Serve the HTML page for the overlay
