@@ -58,31 +58,6 @@ A customizable Apple Music now playing display for macOS.
    ./music_server.py
    ```
 
-### Setting Up OBS
-
-To add Jam Deck to your OBS scene:
-
-1. In OBS Studio, select the scene where you want to display your music
-2. In the Sources panel, click the `+` button
-3. Select `Browser` from the list of sources
-4. Choose `Create New` and give it a name (e.g., "Now Playing Music")
-5. Click `OK`
-6. In the Browser Source properties:
-   - URL: Use the app to copy a scene-specific URL, or use `http://localhost:8080/`
-   - Width: 400 (recommended minimum)
-   - Height: 140
-   - Check "Refresh browser when scene becomes active"
-7. Click `OK` to add the browser source
-
-#### Changing Theme and Width Settings
-
-1. Right-click on the Browser Source in OBS
-2. Select `Interact`
-3. A new window will open showing the overlay
-4. Hover over the overlay to access the settings menu
-5. Select your preferred theme and width option
-6. Changes are saved automatically
-
 ## Usage
 
 Once installed, the overlay will automatically display your currently playing Apple Music tracks.
@@ -107,13 +82,21 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
      - When enabled (✓): Copying a scene URL will also open it in your browser.
      - When disabled: URLs are only copied to clipboard without opening.
 
-4. **OBS Setup**
-   - Copy scene URLs directly from the menu.
-   - Paste into OBS Browser Source properties.
-   - See [Setting Up OBS](#setting-up-obs).
+## Setting Up OBS
 
-The menu bar app stores your preferences between sessions, so your auto-open setting and scenes will be remembered when you restart.
+To add Jam Deck to your OBS scene:
 
+1. In OBS Studio, select the scene where you want to display your music
+2. In the Sources panel, click the `+` button
+3. Select `Browser` from the list of sources
+4. Choose `Create New` and give it a name (e.g., "Now Playing Music")
+5. Click `OK`
+6. In the Browser Source properties:
+   - URL: Use the app to copy a scene-specific URL, or use `http://localhost:8080/`
+   - Width: 400 (recommended minimum)
+   - Height: 140
+   - Check "Refresh browser when scene becomes active"
+7. Click `OK` to add the browser source
 
 ### Theme Selection
 
@@ -133,7 +116,6 @@ In the settings menu:
 
 - **A**: Adaptive width (only as wide as needed for the text).
 - **F**: Fixed width (expands to fill the entire browser source width, default).
-
 
 ## Troubleshooting
 
