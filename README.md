@@ -15,6 +15,8 @@ A customizable Apple Music now playing display for macOS.
 - Font changes with each theme for a complete visual experience
 - Settings menu appears only on hover (invisible to viewers)
 - Scene-specific settings saved between sessions (use ?scene=scenename in URL)
+- Menu bar app for easy access to all controls
+- One-click scene URL copying with optional auto-open in browser
 
 ## Requirements
 
@@ -23,6 +25,16 @@ A customizable Apple Music now playing display for macOS.
 - OBS Studio or similar streaming software with browser source support
 
 ## Installation
+
+### Option 1: Menu Bar App (Recommended)
+
+1. Download the latest Jam Deck.app from the Releases page
+2. Move to your Applications folder
+3. Launch Jam Deck from your Applications folder
+4. The app will appear in your menu bar with a musical note icon
+5. The server starts automatically when you launch the app
+
+### Option 2: Manual Installation
 
 1. Clone this repository:
    ```
@@ -40,15 +52,43 @@ A customizable Apple Music now playing display for macOS.
    ./music_server.py
    ```
 
-4. Add a Browser Source in OBS:
-   - URL: `http://localhost:8080/` or `http://localhost:8080/?scene=scenename` for scene-specific settings
-   - Width: 400 (recommended minimum)
-   - Height: 140
-   - Check "Refresh browser when scene becomes active"
+### Setting Up OBS
+
+Add a Browser Source in OBS:
+- URL: `http://localhost:8080/` or use the app to copy a scene-specific URL
+- Width: 400 (recommended minimum)
+- Height: 140
+- Check "Refresh browser when scene becomes active"
 
 ## Usage
 
 Once installed, the overlay will automatically display your currently playing Apple Music tracks.
+
+### Menu Bar App
+
+Jam Deck's menu bar app provides easy access to all features directly from your Mac's menu bar:
+
+1. **Server Control**
+   - Click "Start Server" to begin displaying your music
+   - Click "Stop Server" when you're done streaming
+
+2. **Scene Management**
+   - Under "Copy Scene URL," select any scene to copy its URL to the clipboard
+   - Each scene can have its own saved theme and width settings
+   - Use "Add New Scene..." to create custom scenes for different parts of your stream
+   - Use "Manage Scenes..." to rename or delete existing scenes
+
+3. **Browser Integration**
+   - Click "Open in Browser" to preview how your overlay looks
+   - Toggle "Auto-open URLs in Browser" to control whether scene URLs automatically open when copied:
+     - When enabled (✓): Copying a scene URL will also open it in your browser
+     - When disabled: URLs are only copied to clipboard without opening
+
+4. **OBS Setup**
+   - Copy scene URLs directly from the menu
+   - Paste into OBS Browser Source properties
+
+The menu bar app stores your preferences between sessions, so your auto-open setting and scenes will be remembered when you restart.
 
 
 ### Theme Selection
@@ -83,7 +123,18 @@ In the settings menu:
 
 ## Auto-Start on Boot
 
-To make the server start automatically when you boot your Mac:
+### Using the Menu Bar App
+
+If you're using the menu bar app (Option 1 installation):
+
+1. Go to System Preferences → Users & Groups → Login Items
+2. Click the "+" button
+3. Browse to your Applications folder and select "Jam Deck.app"
+4. The app will now start automatically at login
+
+### Using the Manual Installation
+
+If you're using the manual installation:
 
 1. Create an Automator application:
    - Open Automator
@@ -113,8 +164,3 @@ By default, the server runs on port 8080. To change this:
 ## License
 
 [MIT License](LICENSE)
-
-## Acknowledgements
-
-- "Natural" theme (formerly "Polar Bear Cafe") is inspired by natural, earthy aesthetics
-- Created as a lightweight alternative to other music display solutions
