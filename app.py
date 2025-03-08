@@ -204,8 +204,7 @@ class JamDeckApp(rumps.App):
                 "Jam Deck for OBS\n"
                 "Version 1.0.0\n\n"
                 "Display your Apple Music tracks in OBS.\n\n"
-                "For OBS: Add Browser Source with URL http://localhost:8080\n"
-                "Width: Recommended minimum 400px, Height: 140px\n\n"
+                "OBS Tip - Width: Recommended minimum 400px, Height: 140px\n\n"
                 "© 2025 Henry Manes"
             )
         )
