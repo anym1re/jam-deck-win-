@@ -18,15 +18,27 @@ class JamDeckApp(rumps.App):
         self.server_process = None
         self.server_thread = None
         
+        # Load saved scenes
+        self.scenes = self.load_scenes()
+        self.current_scene = self.scenes[0] if self.scenes else "default"
+        
         # Configure menu items
         self.menu = [
             rumps.MenuItem("Start Server", callback=self.toggle_server),
+            None,  # Separator
+        ]
+        
+        # Setup scenes menu
+        self.setup_scenes_menu()
+        
+        # Add remaining menu items
+        self.menu.extend([
             None,  # Separator
             rumps.MenuItem("Open in Browser", callback=self.open_browser),
             rumps.MenuItem("Copy Source URL", callback=self.copy_source_url),
             None,  # Separator
             rumps.MenuItem("About", callback=self.show_about)
-        ]
+        ])
         
         # Update menu text based on current state
         self.update_menu_state()
@@ -162,16 +174,25 @@ class JamDeckApp(rumps.App):
         )
 
     def copy_source_url(self, _):
-        """Copy source URL to clipboard"""
+        """Copy source URL to clipboard with current scene parameter"""
         try:
             import subprocess
+            # Base URL
+            base_url = "http://localhost:8080"
+            
+            # Add scene parameter if not default
+            if self.current_scene and self.current_scene != "default":
+                url = f"{base_url}/?scene={self.current_scene}"
+            else:
+                url = base_url
+            
             # Copy URL to clipboard using pbcopy
-            url = "http://localhost:8080"
             subprocess.run("pbcopy", text=True, input=url)
+            
             rumps.notification(
                 title="Jam Deck",
                 subtitle="URL Copied",
-                message="OBS source URL copied to clipboard"
+                message=f"OBS source URL for scene '{self.current_scene}' copied to clipboard"
             )
         except Exception as e:
             rumps.notification(
@@ -193,6 +214,149 @@ class JamDeckApp(rumps.App):
                 "© 2025 Henry Manes"
             )
         )
+    
+    def load_scenes(self):
+        """Load saved scenes from config file"""
+        try:
+            config_path = os.path.join(os.path.expanduser("~"), ".jamdeck_scenes")
+            if os.path.exists(config_path):
+                with open(config_path, "r") as f:
+                    scenes = [line.strip() for line in f.readlines() if line.strip()]
+                    if not scenes:
+                        return ["default"]
+                    return scenes
+            return ["default"]
+        except Exception:
+            return ["default"]
+
+    def save_scenes(self):
+        """Save scenes to config file"""
+        try:
+            config_path = os.path.join(os.path.expanduser("~"), ".jamdeck_scenes")
+            with open(config_path, "w") as f:
+                for scene in self.scenes:
+                    f.write(f"{scene}\n")
+        except Exception as e:
+            rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}")
+
+    def setup_scenes_menu(self):
+        """Set up the scenes submenu"""
+        # Create scenes submenu
+        scenes_menu = rumps.MenuItem("Scenes")
+        
+        # Add each scene as a menu item
+        for scene in self.scenes:
+            item = rumps.MenuItem(scene, callback=self.select_scene)
+            if scene == self.current_scene:
+                item.state = True
+            scenes_menu.add(item)
+        
+        # Add separator and management options
+        scenes_menu.add(None)  # Separator
+        scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
+        scenes_menu.add(rumps.MenuItem("Manage Scenes...", callback=self.manage_scenes))
+        
+        # Add scenes menu to main menu
+        self.menu.append(scenes_menu)
+    
+    def select_scene(self, sender):
+        """Handle scene selection"""
+        # Uncheck all scenes
+        scenes_menu = self.menu["Scenes"]
+        for item in scenes_menu.values():
+            if isinstance(item, rumps.MenuItem) and not item.title.startswith("Add") and not item.title.startswith("Manage"):
+                item.state = False
+        
+        # Check selected scene
+        sender.state = True
+        self.current_scene = sender.title
+        
+        # Show notification
+        rumps.notification(
+            title="Jam Deck",
+            subtitle="Scene Changed",
+            message=f"Active scene: {self.current_scene}"
+        )
+
+    def add_new_scene(self, _):
+        """Show dialog to add a new scene"""
+        response = rumps.Window(
+            title="Add New Scene",
+            message="Enter a name for the new scene:",
+            dimensions=(300, 20)
+        ).run()
+        
+        if response.clicked and response.text:
+            # Sanitize name for URL (replace spaces with hyphens, remove special chars)
+            scene_name = "".join(c if c.isalnum() else "-" for c in response.text)
+            
+            # Check if name exists
+            if scene_name in self.scenes:
+                rumps.alert("Scene Error", f"Scene '{scene_name}' already exists.")
+                return
+            
+            # Add the new scene
+            self.scenes.append(scene_name)
+            self.save_scenes()
+            
+            # Rebuild scenes menu
+            self.setup_scenes_menu()
+
+    def manage_scenes(self, _):
+        """Open scene management window"""
+        # This would ideally use a custom window with a list
+        # Since rumps doesn't support complex UI, a simple dialog is used
+        # For each scene, show a dialog asking to keep, rename, or delete
+        
+        i = 0
+        while i < len(self.scenes):
+            scene = self.scenes[i]
+            
+            # Skip default scene (always present)
+            if scene == "default":
+                i += 1
+                continue
+            
+            # Show options
+            response = rumps.Window(
+                title=f"Scene: {scene}",
+                message="Options:",
+                buttons=["Keep", "Rename", "Delete"]
+            ).run()
+            
+            if response.clicked == 1:  # Rename
+                new_name = rumps.Window(
+                    title="Rename Scene",
+                    message=f"Enter new name for '{scene}':",
+                    dimensions=(300, 20)
+                ).run()
+                
+                if new_name.clicked and new_name.text:
+                    # Sanitize name
+                    sanitized_name = "".join(c if c.isalnum() else "-" for c in new_name.text)
+                    
+                    # Update scene name
+                    self.scenes[i] = sanitized_name
+                    self.save_scenes()
+                    
+                    # Update current_scene if it was renamed
+                    if self.current_scene == scene:
+                        self.current_scene = sanitized_name
+            
+            elif response.clicked == 2:  # Delete
+                # If current scene is being deleted, switch to default
+                if self.current_scene == scene:
+                    self.current_scene = "default"
+                
+                # Remove the scene
+                self.scenes.remove(scene)
+                self.save_scenes()
+                continue
+            
+            i += 1
+        
+        # Rebuild scenes menu
+        self.setup_scenes_menu()
 
 if __name__ == "__main__":
     app = JamDeckApp()
