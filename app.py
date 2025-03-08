@@ -7,6 +7,13 @@ import threading
 import time
 import json
 
+# Import version from music_server.py
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from music_server import VERSION
+except ImportError:
+    VERSION = "1.1.1"  # Fallback version
+
 class JamDeckApp(rumps.App):
     def __init__(self):
         # Path to menu bar icon (template means it adapts to light/dark mode)
@@ -190,7 +197,7 @@ class JamDeckApp(rumps.App):
             title="About Jam Deck",
             message=(
                 "Jam Deck for OBS\n"
-                "Version 1.0.0\n\n"
+                f"Version {VERSION}\n\n"
                 "Display your Apple Music tracks in OBS.\n\n"
                 "OBS Tip - Width: Recommended minimum 400px, Height: 140px\n\n"
                 "© 2025 Henry Manes"
