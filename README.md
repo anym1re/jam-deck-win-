@@ -18,9 +18,9 @@ A customizable Apple Music now playing display for macOS.
 - Automatically hides when no music is playing.
 - Support for album artwork.
 - Clean animated transitions between songs.
-- Settings menu appears only on hover (invisible to viewers).
+- Theme menu appears only on hover (invisible to viewers).
 - Scene-specific settings saved between sessions.
-- Menu bar app for easy access to all controls.
+- Menu bar app for easy access to server controls and scene management.
 - One-click scene URL copying for easy OBS setup.
 
 ## Requirements
@@ -80,7 +80,7 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
    - Use "Manage Scenes..." to rename or delete existing scenes.
 
 3. **Browser Integration**
-   - Click "Open in Browser" to preview how your overlay looks.
+   - Click "Open in Browser" to preview how the default overlay looks.
 
 ## Setting Up OBS
 
