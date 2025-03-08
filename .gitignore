@@ -41,6 +41,5 @@ npm-debug.log*
 
 # Application specific
 /libffi.8.dylib
-/collect_zmq.py
 *.icns
 /tmp/

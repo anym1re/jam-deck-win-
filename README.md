@@ -30,7 +30,7 @@ A customizable Apple Music now playing display for macOS.
 1. Download the latest Jam Deck.app from the Releases page.
 2. Move to your Applications folder.
 3. Launch Jam Deck from your Applications folder.
-   - If you see a warning about an app from an unidentified developer, see [Apple's guide on opening such apps](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
+   - If you see a warning about an app from an unidentified developer, see [Apple's guide](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
 4. The app will appear in your menu bar with a musical note icon.
 5. The server starts automatically when you launch the app.
 
@@ -160,6 +160,33 @@ By default, the server runs on port 8080. To change this (Manual installation on
 3. Change `8080` to your desired port number.
 4. Save the file and restart the server.
 5. Update your browser source URL in OBS to use the new port.
+
+## Building from Source
+
+If you want to build the Jam Deck menu bar app from source:
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/jam-deck.git
+   cd jam-deck
+   ```
+
+2. Install py2app:
+   ```
+   pip install py2app
+   ```
+
+3. Run the build script:
+   ```
+   python setup.py py2app
+   ```
+
+4. The built application will be available in the `dist` directory.
+
+### Build Scripts
+
+- `setup.py`: Main build configuration for py2app
+- `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build
 
 ## License
 
