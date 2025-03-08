@@ -139,7 +139,8 @@ In the settings menu:
 **Permission errors:**
 - macOS may need permission to control Apple Music.
 - Go to System Preferences → Security & Privacy → Automation.
-- Ensure Terminal (or whatever app runs the script) has permission to control Apple Music.
+- Ensure "Jam Deck" has permission to control Apple Music.
+- If you see a permissions prompt when launching the app, click "OK" to allow access.
 
 ## Auto-Start on Boot
 
@@ -186,6 +187,7 @@ By default, the server runs on port 8080. To change this (Manual installation on
 **Requirements:**
 - Python 3.6 or later
 - macOS 10.14 or later
+- create-dmg (optional, for creating DMG installers)
 
 If you want to build the Jam Deck menu bar app from source:
 
@@ -200,7 +202,13 @@ If you want to build the Jam Deck menu bar app from source:
    pip install py2app
    ```
 
-3. Run the build script:
+3. Option A - Using the build script (recommended):
+   ```
+   chmod +x build.sh
+   ./build.sh
+   ```
+   
+   Option B - Manual build:
    ```
    python setup.py py2app
    ```
@@ -209,8 +217,17 @@ If you want to build the Jam Deck menu bar app from source:
 
 ### Build Scripts
 
+- `build.sh`: Automated build script that handles closing any running instances, cleaning previous builds, building the app, and creating a DMG installer.
 - `setup.py`: Main build configuration for py2app.
 - `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build.
+
+### Script Permissions
+
+Ensure that your build script has execute permissions. You can set this by running `chmod +x build.sh` in the terminal.
+
+### Environment Considerations
+
+Make sure that the necessary tools (osascript, rm, python, create-dmg) are installed and accessible in your system's PATH. The create-dmg tool is only needed if you want to create DMG installers.
 
 ## License
 
