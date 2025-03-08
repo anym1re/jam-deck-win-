@@ -200,7 +200,7 @@ class JamDeckApp(rumps.App):
     def open_documentation(self, _):
         """Open documentation website in browser"""
         try:
-            subprocess.run(["open", "https://github.com/detekoi/jam-deck"])
+            subprocess.run(["open", "https://github.com/detekoi/jam-deck/blob/main/README.md"])
         except Exception as e:
             rumps.notification(
                 title="Jam Deck",

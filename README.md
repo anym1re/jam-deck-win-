@@ -44,7 +44,7 @@ A customizable Apple Music now playing display for macOS.
 
 ### Option 1: Menu Bar App (Recommended)
 
-1. Download the latest Jam Deck.app from the Releases page.
+1. Download the latest Jam Deck.app from the [Releases](https://github.com/detekoi/jam-deck/releases/) page.
 2. Move to your Applications folder.
 3. Launch Jam Deck from your Applications folder.
    - If you see a warning about an app from an unidentified developer, see [Apple's guide](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
