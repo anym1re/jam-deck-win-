@@ -8,12 +8,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Inter:wght@400;700&family=Poppins:wght@400;700&family=Quicksand:wght@400;700&family=Rubik:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Custom font for Retro theme -->
+    <!-- Custom fonts -->
     <!-- Retro-Gaming.ttf font from Daymarius (https://www.dafont.com/retro-gaming.font) -->
+    <!-- Atkinson Hyperlegible font designed for the Braille Institute for improved readability -->
     <style>
         @font-face {
             font-family: 'Retro Gaming';
             src: url('/assets/fonts/Retro-Gaming.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        @font-face {
+            font-family: 'Atkinson Hyperlegible';
+            src: url('/assets/fonts/AtkinsonHyperlegible.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -152,6 +160,7 @@
             font-size: 12px;
             font-weight: bold;
             color: white;
+            margin: 0 4px 0 0;
         }
         
         .theme-btn:hover {
@@ -380,7 +389,7 @@
         
         /* Transparent Theme */
         .theme-transparent {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Atkinson Hyperlegible', sans-serif;
         }
 
         .theme-transparent .music-container {

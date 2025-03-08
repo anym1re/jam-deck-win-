@@ -110,7 +110,7 @@ Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 - **Light**: Clean white theme with blue accents.
 
 #### Square Themes
-- **Transparent**: Minimalist theme with no background, just text and controls.
+- **Transparent**: Minimalist theme with no background, using Atkinson Hyperlegible font for improved readability.
 - **Neon**: Cyberpunk-inspired theme with glowing cyan text on black background.
 - **Terminal**: Green-on-black theme reminiscent of classic computer terminals.
 - **Retro**: Blue and yellow theme using pixel-style Retro Gaming font.
@@ -118,7 +118,9 @@ Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 
 **Note about Settings Storage**: Theme and width preferences are stored separately in each browser's local storage. This means settings selected in your regular browser (Chrome, Safari, etc.) won't automatically appear in OBS. You'll need to configure your preferred settings once in each environment where you use Jam Deck.
 
-**Font Attribution**: The Retro theme uses the Retro Gaming font created by Daymarius, available at [dafont.com/retro-gaming.font](https://www.dafont.com/retro-gaming.font).
+**Font Attribution**: 
+- The Retro theme uses the Retro Gaming font created by Daymarius, available at [dafont.com/retro-gaming.font](https://www.dafont.com/retro-gaming.font)
+- The Transparent theme uses Atkinson Hyperlegible font designed by the Braille Institute for improved readability.
 
 ### Width Options
 
