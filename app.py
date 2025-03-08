@@ -266,14 +266,17 @@ class JamDeckApp(rumps.App):
         # Add separator and management options
         copy_scenes_menu.add(None)  # Separator
         copy_scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
-        copy_scenes_menu.add(rumps.MenuItem("Manage Scenes...", callback=self.manage_scenes))
+        
+        # Create and add the manage scenes submenu
+        manage_scenes_menu = self.build_manage_scenes_menu()
+        copy_scenes_menu.add(manage_scenes_menu)
         
         return copy_scenes_menu
         
     def rebuild_copy_scenes_menu(self):
         """Rebuild the copy scenes menu after changes"""
         if "Copy Scene URL" in self.menu:
-            # Create new copy scenes menu
+            # Create new copy scenes menu with updated nested menus
             new_copy_scenes_menu = self.create_copy_scenes_menu()
             
             # Replace existing menu
@@ -352,80 +355,82 @@ class JamDeckApp(rumps.App):
             self.rebuild_copy_scenes_menu()
 
     def manage_scenes(self, _):
-        """Open scene management window"""
-        # This would ideally use a custom window with a list
-        # Since rumps doesn't support complex UI, we'll use multiple simple dialogs
+        """Show the Manage Scenes menu (this is a menu item callback but not used directly)"""
+        # This function is just a placeholder for menu item callback
+        # The actual menu is built in build_manage_scenes_menu and attached in create_copy_scenes_menu
+        pass
         
-        i = 0
-        while i < len(self.scenes):
-            scene = self.scenes[i]
-            
-            # Skip default scene (always present)
-            if scene == "default":
-                i += 1
-                continue
-            
-            # First, ask if user wants to modify this scene
-            should_modify = rumps.alert(
-                title=f"Scene: {scene}",
-                message="Do you want to modify this scene?",
-                ok="No, Keep It",
-                cancel="Yes, Modify It"
-            )
-            
-            # If user wants to keep it, move to next scene
-            if should_modify == 1:  # OK button ("No, Keep It")
-                i += 1
-                continue
-            
-            # Ask what modification to make
-            action = rumps.alert(
-                title=f"Modify Scene: {scene}",
-                message="What would you like to do with this scene?",
-                ok="Rename",
-                cancel="Delete"
-            )
-            
-            if action == 1:  # OK button ("Rename")
-                # Ask for new name
-                new_name = rumps.Window(
-                    title="Rename Scene",
-                    message=f"Enter new name for '{scene}':",
-                    dimensions=(300, 20)
-                ).run()
-                
-                if new_name.clicked and new_name.text:
-                    # Sanitize name
-                    sanitized_name = "".join(c if c.isalnum() else "-" for c in new_name.text)
-                    
-                    # Update scene name
-                    self.scenes[i] = sanitized_name
-                    self.save_scenes()
-                    
-                    i += 1
-            else:  # Cancel button ("Delete")
-                # Confirm deletion
-                confirm = rumps.alert(
-                    title="Confirm Deletion",
-                    message=f"Are you sure you want to delete the scene '{scene}'?",
-                    ok="No, Keep It",
-                    cancel="Yes, Delete It"
-                )
-                
-                if confirm != 1:  # Not OK button (so "Yes, Delete It")
-                    # Remove the scene
-                    self.scenes.remove(scene)
-                    self.save_scenes()
-                    # Don't increment i since we removed an item
-                else:
-                    i += 1  # Skip to next item if not deleting
-            
-            # If we didn't delete, we need to move to the next scene
-            if i < len(self.scenes) and scene == self.scenes[i]:
-                i += 1
+    def build_manage_scenes_menu(self):
+        """Generate the dynamic submenu for scene management"""
+        manage_scenes_menu = rumps.MenuItem("Manage Scenes")
         
-        # Rebuild copy scenes menu
-        self.rebuild_copy_scenes_menu()
+        # Add each scene as a menu item with its own submenu
+        for scene in self.scenes:
+            scene_item = rumps.MenuItem(f"Scene: {scene}")
+            
+            # Only add operation submenus for non-default scenes
+            if scene != "default":
+                # Create callbacks with scene name embedded in the callback
+                rename_callback = lambda sender, scene_name=scene: self.rename_scene_with_name(sender, scene_name)
+                delete_callback = lambda sender, scene_name=scene: self.delete_scene_with_name(sender, scene_name)
+                
+                rename_item = rumps.MenuItem("Rename...", callback=rename_callback)
+                delete_item = rumps.MenuItem("Delete", callback=delete_callback)
+                scene_item.add(rename_item)
+                scene_item.add(delete_item)
+            else:
+                # Make default scene item appear disabled
+                scene_item.set_callback(None)
+            
+            manage_scenes_menu.add(scene_item)
+        
+        return manage_scenes_menu
+        
+    def rename_scene_with_name(self, sender, scene_name):
+        """Rename a scene using the passed scene name"""
+        print(f"Renaming scene: {scene_name}")
+        
+        # Show rename dialog
+        new_name = rumps.Window(
+            title="Rename Scene",
+            message=f"Enter new name for '{scene_name}':",
+            dimensions=(300, 20)
+        ).run()
+        
+        if new_name.clicked and new_name.text:
+            # Sanitize name
+            sanitized_name = "".join(c if c.isalnum() else "-" for c in new_name.text)
+            
+            # Find and update scene name
+            if scene_name in self.scenes:
+                index = self.scenes.index(scene_name)
+                self.scenes[index] = sanitized_name
+                self.save_scenes()
+                
+                # Rebuild menus
+                self.rebuild_copy_scenes_menu()
+    
+    def delete_scene_with_name(self, sender, scene_name):
+        """Delete a scene using the passed scene name"""
+        print(f"Deleting scene: {scene_name}")
+        
+        # Confirm deletion
+        confirm = rumps.alert(
+            title="Confirm Deletion",
+            message=f"Are you sure you want to delete the scene '{scene_name}'?",
+            ok="No, Keep It",
+            cancel="Yes, Delete It"
+        )
+        
+        if confirm != 1:  # Not OK button (so "Yes, Delete It")
+            # Remove the scene
+            if scene_name in self.scenes:
+                self.scenes.remove(scene_name)
+                self.save_scenes()
+                
+                # Rebuild menus
+                self.rebuild_copy_scenes_menu()
+    
 
 if __name__ == "__main__":
     app = JamDeckApp()
