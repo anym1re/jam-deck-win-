@@ -76,22 +76,12 @@ To add Jam Deck to your OBS scene:
 
 #### Changing Theme and Width Settings
 
-There are two ways to customize your overlay:
-
-1. **In-stream settings** (hover method):
-   - Hover over the overlay during preview or edit mode
-   - Use the settings panel that appears at the bottom
-   - Changes are saved for that specific scene URL
-
-2. **Right-click method** (recommended):
-   - Right-click on the Browser Source in OBS
-   - Select `Interact`
-   - A new window will open showing the overlay
-   - Hover over the overlay to access the settings menu
-   - Select your preferred theme and width option
-   - Changes are saved automatically
-
-**Tip**: Using the `Interact` method makes it easier to access settings without having to position your mouse precisely over the small overlay in your main OBS window.
+1. Right-click on the Browser Source in OBS
+2. Select `Interact`
+3. A new window will open showing the overlay
+4. Hover over the overlay to access the settings menu
+5. Select your preferred theme and width option
+6. Changes are saved automatically
 
 ## Usage
 
