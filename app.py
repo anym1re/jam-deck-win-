@@ -42,6 +42,7 @@ class JamDeckApp(rumps.App):
             rumps.MenuItem("Open in Browser", callback=self.open_browser),
             auto_open_item,
             None,  # Separator
+            rumps.MenuItem("Documentation", callback=self.open_documentation),
             rumps.MenuItem("About", callback=self.show_about)
         ]
         
@@ -196,6 +197,17 @@ class JamDeckApp(rumps.App):
         self.preferences["auto_open_urls"] = sender.state
         self.save_preferences()
 
+    def open_documentation(self, _):
+        """Open documentation website in browser"""
+        try:
+            subprocess.run(["open", "https://github.com/detekoi/jam-deck"])
+        except Exception as e:
+            rumps.notification(
+                title="Jam Deck",
+                subtitle="Error", 
+                message=f"Could not open documentation: {str(e)}"
+            )
+            
     def show_about(self, _):
         """Show about dialog"""
         rumps.alert(
