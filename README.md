@@ -39,7 +39,7 @@ A customizable Apple Music now playing display for macOS.
 4. The app will appear in your menu bar with a musical note icon.
 5. The server starts automatically when you launch the app.
 
-### Option 2: Manual Installation
+### Option 2: Manual Installation (Advanced)
 
 **Requirements:**
 - Python 3.6 or later
@@ -75,7 +75,7 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
 
 2. **Scene Management**
    - Under "Copy Scene URL," select any scene to copy its URL to the clipboard.
-   - Each scene can have its own saved theme and width settings within each browser. 
+   - Each scene can have unique theme and width settings.
    - Use "Add New Scene..." to create custom scenes for different parts of your stream.
    - Use "Manage Scenes..." to rename or delete existing scenes.
 
@@ -86,17 +86,17 @@ Jam Deck's menu bar app provides easy access to all features directly from your 
 
 To add Jam Deck to your OBS scene:
 
-1. In OBS Studio, select the scene where you want to display your music
-2. In the Sources panel, click the `+` button
-3. Select `Browser` from the list of sources
-4. Choose `Create New` and give it a name (e.g., "Now Playing Music")
-5. Click `OK`
+1. In OBS Studio, select the scene where you want to display your music.
+2. In the Sources panel, click the `+` button.
+3. Select `Browser` from the list of sources.
+4. Choose `Create New` and give it a name (e.g., "Now Playing Music").
+5. Click `OK`.
 6. In the Browser Source properties:
    - URL: Use the app to copy a scene-specific URL, or use `http://localhost:8080/`
    - Width: 400 (recommended minimum)
    - Height: 140
-   - Check "Refresh browser when scene becomes active"
-7. Click `OK` to add the browser source
+   - Check "Refresh browser when scene becomes active."
+7. Click `OK` to add the browser source.
 
 ### Theme Selection
 
@@ -113,13 +113,13 @@ Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 - **Transparent**: Minimalist theme with no background, just text and controls.
 - **Neon**: Cyberpunk-inspired theme with glowing cyan text on black background.
 - **Terminal**: Green-on-black theme reminiscent of classic computer terminals.
-- **Retro**: Blue and yellow theme using pixel-style Retro Gaming font.
+- **Retro**: Blue and yellow theme using pixel-style Press Start 2P font.
 - **High Contrast**: Black and white theme with Atkinson Hyperlegible font optimized for maximum readability.
 
 **Note about Settings Storage**: Theme and width preferences are stored separately in each browser's local storage. This means settings selected in your regular browser (Chrome, Safari, etc.) won't automatically appear in OBS. You'll need to configure your preferred settings once in each environment where you use Jam Deck.
 
 **Font Attribution**: 
-- The Retro theme uses the Retro Gaming font created by Daymarius, available at [dafont.com/retro-gaming.font](https://www.dafont.com/retro-gaming.font)
+- The Retro theme uses Press Start 2P font by CodeMan38 (licensed under SIL Open Font License), with Retro Gaming font as fallback
 - The High Contrast theme uses Atkinson Hyperlegible font designed by the Braille Institute for improved readability.
 
 ### Width Options
@@ -209,8 +209,8 @@ If you want to build the Jam Deck menu bar app from source:
 
 ### Build Scripts
 
-- `setup.py`: Main build configuration for py2app
-- `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build
+- `setup.py`: Main build configuration for py2app.
+- `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build.
 
 ## License
 
