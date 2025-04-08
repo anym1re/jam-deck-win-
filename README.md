@@ -2,7 +2,11 @@
 
 A customizable Apple Music now playing display for macOS.
 
-![Jam Deck](assets/images/preview.png)
+![Screenshot of Jam Deck showing four Apple Music now playing widgets with different color themes. Each widget displays album artwork, song title, and artist information in various styles - pink, green, dark, and white themes with different song information including Japanese characters, Wintime by CHAI, 'Dakotas' by Sofia Kourtesis, 'Learning Lessens (Shy One Remix)' by Andrew Ashong & Kaidi Tatham, and 'Hidden Memory' by AceMoMa.](assets/images/preview.png)
+
+![Screenshot of a macOS system notification from Jam Deck. The notification features the Jam Deck icon (a pink jar) and displays 'Server Started' as the header, followed by the message 'Now playing overlay is active!' The notification uses the standard macOS rounded rectangle design with a light gray background.](/assets/images/jam-deck-macos-notification.png)
+
+![Screenshot of Jam Deck's menu bar interface on macOS. The interface shows a dropdown menu with options including 'Stop Server', 'Copy Scene URL' (which has a submenu showing scene names like 'default', 'gaming', 'away', 'Cozy-10-9', 'minimal-16-9', 'sakura', and 'coding'), 'Open in Browser', 'Documentation', 'About', and 'Quit'. The submenu also includes options for 'Add New Scene...' and 'Manage Scenes'.](/assets/images/jam-deck-macos-menubar.png)
 
 ## Quick Links
 - [Download](https://github.com/detekoi/jam-deck/releases/)
@@ -231,4 +235,4 @@ Make sure that the necessary tools (osascript, rm, python, create-dmg) are insta
 
 ## License
 
-[MIT License](LICENSE)
+[BSD 2-Clause License](LICENSE.md)
