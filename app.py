@@ -25,6 +25,7 @@ class JamDeckApp(rumps.App):
         self.server_running = False
         self.server_process = None
         self.server_thread = None
+        self.actual_port = 8080 # Default port, will be updated
         
         # Load saved scenes
         self.scenes = self.load_scenes()
@@ -33,8 +34,12 @@ class JamDeckApp(rumps.App):
         server_item = rumps.MenuItem("Start Server", callback=self.toggle_server)
         copy_scenes_menu = self.create_copy_scenes_menu()
         
+        self.server_url_display = rumps.MenuItem(f"Server URL: http://localhost:{self.actual_port}", callback=None)
+        self.server_url_display.set_callback(None) # Make it non-clickable initially
+        
         self.menu = [
             server_item,
+            self.server_url_display, # Add display item
             None,  # Separator
             copy_scenes_menu,
             None,  # Separator
@@ -48,15 +53,17 @@ class JamDeckApp(rumps.App):
         self.update_menu_state()
 
     def update_menu_state(self):
-        """Update the menu items based on server state"""
+        """Update the menu items and URL display based on server state"""
         if self.server_running:
             self.menu["Start Server"].title = "Stop Server"
-            # Enable "Open in Browser" when server is running
-            self.menu["Open in Browser"].set_callback(self.open_browser)
+            self.server_url_display.title = f"Server URL: http://localhost:{self.actual_port}"
+            self.server_url_display.set_callback(None) # Keep it non-clickable
+            self.menu["Open in Browser"].set_callback(self.open_browser) # Enable Open Browser
         else:
             self.menu["Start Server"].title = "Start Server"
-            # Disable "Open in Browser" when server is not running
-            self.menu["Open in Browser"].set_callback(self.server_not_running)
+            self.server_url_display.title = "Server Stopped"
+            self.server_url_display.set_callback(None) # Keep it non-clickable
+            self.menu["Open in Browser"].set_callback(self.server_not_running) # Disable Open Browser
 
     def toggle_server(self, sender):
         """Toggle server on/off"""
@@ -122,6 +129,7 @@ class JamDeckApp(rumps.App):
                 # Update state first to prevent monitor_server from triggering crash notification
                 self.server_running = False
                 self.server_process = None
+                self.actual_port = 8080 # Reset to default on stop
                 self.update_menu_state()
                 
                 # Terminate the server process
@@ -155,8 +163,22 @@ class JamDeckApp(rumps.App):
                 # Read output line by line
                 output = process_ref.stdout.readline()
                 if output:
-                    print(f"Server: {output.strip()}")
-                
+                    line = output.strip()
+                    print(f"Server: {line}")
+                    
+                    # Check for the port line
+                    if line.startswith("JAMDECK_PORT="):
+                        try:
+                            port_str = line.split("=")[1]
+                            self.actual_port = int(port_str)
+                            print(f"Detected server port: {self.actual_port}")
+                            # Update UI on main thread
+                            def update_ui_port():
+                                self.update_menu_state()
+                            rumps.Timer(0, update_ui_port).start()
+                        except (IndexError, ValueError) as e:
+                            print(f"Error parsing port from server output: {e}")
+
                 # Check if the server_process reference has changed (happens when stop_server is called)
                 if self.server_process is None or self.server_process != process_ref:
                     break
@@ -165,10 +187,11 @@ class JamDeckApp(rumps.App):
                 # Handle possible errors if process is terminated during reading
                 break
                 
-        # Only send notification if we didn't expect the process to end
+        # Only send notification if we didn't expect the process to end (i.e., it crashed)
         if self.server_running:
             # If we thought it was running, it crashed
             self.server_running = False
+            self.actual_port = 8080 # Reset port on crash
             
             # Update UI on main thread
             rumps.App.notification(
@@ -184,9 +207,13 @@ class JamDeckApp(rumps.App):
             rumps.Timer(0, update).start()
 
     def open_browser(self, _):
-        """Open overlay in default browser"""
+        """Open overlay in default browser using the actual port"""
+        if not self.server_running:
+            self.server_not_running(None)
+            return
         try:
-            subprocess.run(["open", "http://localhost:8080"])
+            url = f"http://localhost:{self.actual_port}"
+            subprocess.run(["open", url])
         except Exception as e:
             rumps.notification(
                 title="Jam Deck",
@@ -287,10 +314,13 @@ class JamDeckApp(rumps.App):
                 self.menu._menu.insertItem_atIndex_(new_copy_scenes_menu._menuitem, index)
     
     def copy_scene_url(self, sender):
-        """Copy the URL for the selected scene to clipboard"""
+        """Copy the URL for the selected scene to clipboard using the actual port"""
+        if not self.server_running:
+            self.server_not_running(None)
+            return
         try:
-            # Base URL
-            base_url = "http://localhost:8080"
+            # Base URL using the actual port
+            base_url = f"http://localhost:{self.actual_port}"
             
             # Add scene parameter if not default
             scene_name = sender.title
