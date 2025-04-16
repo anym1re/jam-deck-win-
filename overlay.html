@@ -766,6 +766,13 @@
                 
                 // Save selection with scene context
                 setSceneStorage('musicPlayerTheme', theme);
+                
+                // Re-check if scrolling is needed after theme change (container size might change)
+                // Pass false to avoid triggering the initial 2s delay
+                requestAnimationFrame(() => { // Use rAF to ensure styles are applied first
+                    songTitleMarquee._checkNeedsScroll(false);
+                    songArtistMarquee._checkNeedsScroll(false);
+                });
             });
         });
         
@@ -789,6 +796,13 @@
                 
                 // Save selection with scene context
                 setSceneStorage('musicPlayerWidth', width);
+                
+                // Re-check if scrolling is needed after width change
+                // Pass false to avoid triggering the initial 2s delay
+                 requestAnimationFrame(() => { // Use rAF to ensure styles are applied first
+                    songTitleMarquee._checkNeedsScroll(false);
+                    songArtistMarquee._checkNeedsScroll(false);
+                });
             });
         });
 
@@ -874,22 +888,34 @@
                 const spaceWidth = this.textElement.getBoundingClientRect().width / this.textElement.textContent.length; 
                 const scrollDistance = originalTextWidth + (4 * spaceWidth); // Width of original text + 4 spaces
 
-                // Apply animation
-                const duration = this.scrollDuration / 1000; // Convert ms to s
-                this.textElement.style.transition = `transform ${duration}s linear`;
+                // --- Calculate dynamic duration ---
+                const pixelsPerSecond = 50; // Adjust scroll speed (pixels per second)
+                let calculatedDurationMs = (scrollDistance / pixelsPerSecond) * 1000;
+                
+                // Apply min/max duration (e.g., min 4s, max 20s)
+                const minDurationMs = 4000; 
+                const maxDurationMs = 20000;
+                const actualDurationMs = Math.max(minDurationMs, Math.min(calculatedDurationMs, maxDurationMs));
+                const actualDurationSec = actualDurationMs / 1000;
+                console.log(`[${this.textElement.id}] Calculated duration: ${calculatedDurationMs.toFixed(0)}ms, Actual duration: ${actualDurationMs}ms`);
+                // --- End dynamic duration calculation ---
+
+                // Apply animation using calculated duration
+                this.textElement.style.transition = `transform ${actualDurationSec}s linear`;
                 this.textElement.style.transform = `translateX(-${scrollDistance}px)`;
 
-                // Reset after scroll completes
+                // Reset after scroll completes (using the actual calculated duration)
                 this.scrollTimer = setTimeout(() => {
                     // Reset position without animation
                     this.textElement.style.transition = 'none';
                     this.textElement.style.transform = 'translateX(0)';
-
-                    // Force reflow before re-enabling transition for the next cycle
-                    void this.textElement.offsetWidth;
                     
+                    // Force reflow *after* resetting position to ensure it visually updates instantly
+                    void this.textElement.offsetWidth; 
+
                     console.log(`[${this.textElement.id}] Scroll finished. Scheduling next scroll (${this.scrollInterval}ms)`);
                     this.isScrolling = false;
+                    // No need to re-apply transition here, it's applied at the start of _performScroll
                     this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll after the interval
                 }, this.scrollDuration);
             }
