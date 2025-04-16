@@ -1009,7 +1009,7 @@
                 
                 // Reset visual state
                 this.innerElement.classList.remove('scrolling-active');
-                this.innerElement.style.animation = 'none'; // Remove animation properties
+                // The line setting style.animation = 'none' was removed as it conflicts with the class-based animation.
                 this.innerElement.style.transform = 'translateX(0)'; // Ensure reset
                 
                 // Reset text content on inner span to the base original text
