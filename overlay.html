@@ -915,7 +915,7 @@
                 
                 // Reset visual state by removing class and styles
                 this.textElement.classList.remove('scrolling-active');
-                this.textElement.style.animation = 'none'; // Stop CSS animation immediately
+                // The line setting style.animation = 'none' was removed as it conflicts with the class-based animation.
                 this.textElement.style.transform = 'translateX(0)'; // Reset position
                 
                 // Reset text content to the base original text
