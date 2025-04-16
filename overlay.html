@@ -808,50 +808,55 @@
             }
 
             _measureWidths() {
-                // Temporarily reset to original text for accurate measurement
-                const currentText = this.textElement.textContent;
-                this.textElement.textContent = this.originalText;
-                this.textElement.style.transform = 'translateX(0)'; // Ensure no transform affects width
-                this.textElement.style.transition = 'none'; // Ensure no transition affects width
-
+                // Measure container width directly
                 const containerWidth = this.container.clientWidth;
                 
-                // Use a clone for accurate text width measurement without layout shifts
+                // Use a clone with the original text for accurate text width measurement
                 const clone = this.textElement.cloneNode(true);
                 clone.style.display = "inline-block";
                 clone.style.width = "auto";
                 clone.style.position = "absolute";
                 clone.style.visibility = "hidden";
+                clone.textContent = this.originalText; // Ensure clone has original text
                 document.body.appendChild(clone);
                 const textWidth = clone.offsetWidth;
                 document.body.removeChild(clone);
 
-                // Restore original state (might be duplicated text if needsScroll)
-                this.textElement.textContent = currentText; 
-
+                // Return measured widths without modifying the live element here
                 return { textWidth, containerWidth };
             }
 
-            _checkNeedsScroll() {
-                // Reset state before check
-                this.textElement.textContent = this.originalText;
+            _checkNeedsScroll(triggerInitialScroll = false) {
+                // Clear any pending animation frame requests for measurement
+                cancelAnimationFrame(this.animationFrameRequest); 
+                
+                // Reset visual state before measurement
                 this.textElement.style.transform = 'translateX(0)';
                 this.textElement.style.transition = 'none';
-                this.needsScroll = false;
+                // Set text content to original for measurement consistency
+                this.textElement.textContent = this.originalText; 
 
                 // Use rAF to ensure DOM is updated before measuring
-                cancelAnimationFrame(this.animationFrameRequest); // Cancel previous request if any
                 this.animationFrameRequest = requestAnimationFrame(() => {
+                    // Perform measurement using the clean original text state
                     const { textWidth, containerWidth } = this._measureWidths();
                     this.needsScroll = textWidth > containerWidth;
 
+                    // Now, update text content based on whether scroll is needed
                     if (this.needsScroll) {
                         // Add duplicate text with spacing
                         this.textElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
-                        this._scheduleNextScroll(this.initialDelay); // Schedule first scroll
+                        // If triggered by an update (like new song), schedule the initial scroll
+                        if (triggerInitialScroll) {
+                            console.log(`[${this.textElement.id}] Needs scroll, scheduling initial scroll (${this.initialDelay}ms)`);
+                            this._scheduleNextScroll(this.initialDelay); 
+                        } else {
+                             console.log(`[${this.textElement.id}] Needs scroll, but initial scroll not triggered this time.`);
+                        }
                     } else {
                         // Ensure original text is displayed if no scroll needed
                         this.textElement.textContent = this.originalText;
+                         console.log(`[${this.textElement.id}] No scroll needed.`);
                     }
                 });
             }
@@ -859,14 +864,18 @@
             _performScroll() {
                 if (!this.needsScroll || this.isScrolling) return;
 
+                console.log(`[${this.textElement.id}] Performing scroll...`);
                 this.isScrolling = true;
                 
-                // Measure original text width for scroll distance calculation
-                const { textWidth } = this._measureWidths(); // Re-measure original text width
-                const scrollDistance = textWidth + (4 * 8); // Width of original text + 4 non-breaking spaces (approx 8px each)
+                // Measure original text width ONCE for scroll distance calculation
+                // We need the width of the *original* text segment, not the duplicated one.
+                const { textWidth: originalTextWidth } = this._measureWidths(); 
+                // Estimate space width (can vary slightly by font, adjust if needed)
+                const spaceWidth = this.textElement.getBoundingClientRect().width / this.textElement.textContent.length; 
+                const scrollDistance = originalTextWidth + (4 * spaceWidth); // Width of original text + 4 spaces
 
                 // Apply animation
-                const duration = this.scrollDuration / 1000;
+                const duration = this.scrollDuration / 1000; // Convert ms to s
                 this.textElement.style.transition = `transform ${duration}s linear`;
                 this.textElement.style.transform = `translateX(-${scrollDistance}px)`;
 
@@ -877,52 +886,66 @@
                     this.textElement.style.transform = 'translateX(0)';
 
                     // Force reflow before re-enabling transition for the next cycle
-                    void this.textElement.offsetWidth; 
-
+                    void this.textElement.offsetWidth;
+                    
+                    console.log(`[${this.textElement.id}] Scroll finished. Scheduling next scroll (${this.scrollInterval}ms)`);
                     this.isScrolling = false;
-                    this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll
+                    this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll after the interval
                 }, this.scrollDuration);
             }
 
             _scheduleNextScroll(delay) {
-                clearTimeout(this.scrollTimer);
-                if (!this.needsScroll) return;
-
+                clearTimeout(this.scrollTimer); // Clear any existing timer
+                if (!this.needsScroll || this.isScrolling) {
+                     console.log(`[${this.textElement.id}] Scheduling cancelled (needsScroll: ${this.needsScroll}, isScrolling: ${this.isScrolling})`);
+                    return; // Don't schedule if not needed or already scrolling
+                }
+                
+                console.log(`[${this.textElement.id}] Scheduling scroll in ${delay}ms`);
                 this.scrollTimer = setTimeout(() => {
-                    this._performScroll();
+                    // Check again right before performing, in case state changed
+                    if (this.needsScroll && !this.isScrolling) {
+                        this._performScroll();
+                    } else {
+                         console.log(`[${this.textElement.id}] Scroll execution cancelled just before start (needsScroll: ${this.needsScroll}, isScrolling: ${this.isScrolling})`);
+                    }
                 }, delay);
             }
 
             updateText(newText) {
-                // Only update if text actually changed
-                if (newText === this.originalText) {
-                    // If text is the same, but maybe container resized, re-check
-                    this._checkNeedsScroll();
-                    return;
-                }
-
-                this.stop(); // Stop existing timers/animations
+                const textChanged = newText !== this.originalText;
+                
+                // Stop any ongoing scroll/timers before updating
+                this.stop(); 
+                
                 this.originalText = newText || ''; // Handle null/undefined
-                this.textElement.textContent = this.originalText; // Set initial text
+                this.textElement.textContent = this.originalText; // Set initial text for measurement
                 
                 if (this.originalText) {
-                    this._checkNeedsScroll(); // Check if new text needs scrolling
+                    // Check if scroll is needed. Pass true to trigger initial scroll if needed.
+                    this._checkNeedsScroll(true); 
                 } else {
-                    this.needsScroll = false; // No text, no scroll
+                    // No text, ensure needsScroll is false and element is empty
+                    this.needsScroll = false; 
+                    this.textElement.textContent = '';
                 }
             }
 
             stop() {
+                 console.log(`[${this.textElement.id}] Stopping marquee.`);
                 clearTimeout(this.scrollTimer);
-                cancelAnimationFrame(this.animationFrameRequest);
+                cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
                 this.isScrolling = false;
-                this.needsScroll = false;
+                // Don't reset needsScroll here, let _checkNeedsScroll determine it
+                // Reset visual state
                 this.textElement.style.transition = 'none';
                 this.textElement.style.transform = 'translateX(0)';
-                this.textElement.textContent = this.originalText; // Reset to original text (might be empty)
+                // Reset text content to the base original text
+                this.textElement.textContent = this.originalText; 
             }
             
             clear() {
+                 console.log(`[${this.textElement.id}] Clearing marquee.`);
                 this.stop();
                 this.originalText = '';
                 this.textElement.textContent = '';
