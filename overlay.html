@@ -879,31 +879,31 @@
                 if (!this.needsScroll || this.isScrolling) return;
 
                 console.log(`[${this.textElement.id}] Performing scroll...`);
+                console.log(`[${this.textElement.id}] Performing scroll...`);
                 this.isScrolling = true;
                 
-                // --- Calculate scroll distance more accurately ---
-                const { textWidth: originalTextWidth } = this._measureWidths();
+                // --- Calculate scroll distance based on half the duplicated text width ---
+                // Ensure the element currently holds the duplicated text for measurement
+                const fullText = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
+                if (this.textElement.textContent !== fullText) {
+                     // This shouldn't happen if _checkNeedsScroll worked, but as a fallback
+                     this.textElement.textContent = fullText;
+                }
 
-                // Measure space width accurately for the current font style
-                const spaceMeasureSpan = document.createElement('span');
-                spaceMeasureSpan.style.visibility = 'hidden';
-                spaceMeasureSpan.style.position = 'absolute';
-                spaceMeasureSpan.style.whiteSpace = 'nowrap'; // Prevent wrapping
-                // Apply relevant styles from the target element
-                const computedStyle = window.getComputedStyle(this.textElement);
-                spaceMeasureSpan.style.fontFamily = computedStyle.fontFamily;
-                spaceMeasureSpan.style.fontSize = computedStyle.fontSize;
-                spaceMeasureSpan.style.fontWeight = computedStyle.fontWeight;
-                spaceMeasureSpan.style.fontStyle = computedStyle.fontStyle;
-                spaceMeasureSpan.style.letterSpacing = computedStyle.letterSpacing;
-                spaceMeasureSpan.textContent = '\u00A0'; // Use non-breaking space for measurement
-                document.body.appendChild(spaceMeasureSpan);
-                const spaceWidth = spaceMeasureSpan.offsetWidth;
-                document.body.removeChild(spaceMeasureSpan);
-                console.log(`[${this.textElement.id}] Measured space width: ${spaceWidth}px`);
+                // Use a clone with the *full duplicated text* to measure its total width
+                const clone = this.textElement.cloneNode(true);
+                clone.style.display = "inline-block";
+                clone.style.width = "auto"; // Ensure width is determined by content
+                clone.style.position = "absolute";
+                clone.style.visibility = "hidden";
+                // No need to set textContent again, it's cloned from the element which should have duplicated text
+                document.body.appendChild(clone);
+                const fullTextWidth = clone.offsetWidth;
+                document.body.removeChild(clone);
 
-                // Calculate total scroll distance (original text + 4 spaces)
-                const scrollDistance = originalTextWidth + (4 * spaceWidth);
+                // Scroll distance is exactly half the width of the duplicated content
+                const scrollDistance = fullTextWidth / 2;
+                console.log(`[${this.textElement.id}] Full duplicated text width: ${fullTextWidth}px, Scroll distance: ${scrollDistance}px`);
                 // --- End distance calculation ---
 
                 // --- Calculate dynamic duration ---
@@ -924,15 +924,14 @@
                     // Ensure the event is for the transform property and the correct element
                     if (event.propertyName === 'transform' && event.target === this.textElement) {
                         
-                        // Use requestAnimationFrame to defer the style reset slightly, potentially smoothing the visual jump
-                        requestAnimationFrame(() => {
-                            // Reset position without animation inside the rAF callback
-                            this.textElement.style.transition = 'none';
-                            this.textElement.style.transform = 'translateX(0)';
-                            
-                            // Force reflow *after* resetting position to ensure it visually updates instantly
-                            void this.textElement.offsetWidth; 
-                        });
+                        // Reset position without animation *immediately* after transition ends
+                        this.textElement.style.transitionDuration = '0s'; // Set duration to 0 first
+                        this.textElement.style.transform = 'translateX(0)';
+                        
+                        // Force reflow to ensure styles apply instantly
+                        void this.textElement.offsetWidth; 
+                        
+                        // Transition duration will be reset correctly before the next scroll in _performScroll
 
                         console.log(`[${this.textElement.id}] Scroll transition finished. Scheduling next scroll (${this.scrollInterval}ms)`);
                         this.isScrolling = false;
