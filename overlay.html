@@ -218,9 +218,10 @@
         
         /* --- CSS Animation for Marquee --- */
         @keyframes scrollText {
-            /* Animate only from start to halfway point */
-            0%   { transform: translateX(0); }     
-            100% { transform: translateX(-50%); } 
+            /* 15s total cycle: 8s scroll + 7s pause */
+            0%      { transform: translateX(0); }     /* Start position */
+            53.33%  { transform: translateX(-50%); } /* Scroll halfway over 8s (8/15 = 53.33%) */
+            100%    { transform: translateX(-50%); } /* Hold end position for 7s */
         }
         
         .scroll-container {
@@ -245,13 +246,14 @@
             margin: 0;
         }
         
-        /* Apply animation via this class to the inner span - JS controls timing/loops */
+        /* Apply animation via this class to the inner span - CSS controls timing/loops */
         .scroll-text .inner-scroll.scrolling-active {
             animation-name: scrollText;
-            /* animation-duration set by JS */
+            animation-duration: 15s; /* Total cycle time including pause */
             animation-timing-function: linear;
-            animation-iteration-count: 1; /* Run only once per class application */
-            /* animation-fill-mode removed - rely on base style for reset */
+            animation-delay: 2s; /* Initial 2s delay */
+            animation-iteration-count: infinite; /* Loop forever */
+            /* animation-fill-mode: backwards; */ /* Optional: Apply start state during delay */
         }
         
         .not-playing {
@@ -790,11 +792,10 @@
                 // Save selection with scene context
                 setSceneStorage('musicPlayerTheme', theme);
                 
-                // Re-check if scrolling is needed after theme change. 
-                // updateText will handle stopping/restarting animation if needed.
+                // Re-check if scrolling is needed after theme change.
                 requestAnimationFrame(() => { 
-                    songTitleMarquee.updateText(songTitleMarquee.originalText); 
-                    songArtistMarquee.updateText(songArtistMarquee.originalText);
+                    songTitleMarquee._checkNeedsScroll(); 
+                    songArtistMarquee._checkNeedsScroll();
                 });
             });
         });
@@ -821,10 +822,9 @@
                 setSceneStorage('musicPlayerWidth', width);
                 
                 // Re-check if scrolling is needed after width change.
-                // updateText will handle stopping/restarting animation if needed.
                  requestAnimationFrame(() => { 
-                    songTitleMarquee.updateText(songTitleMarquee.originalText);
-                    songArtistMarquee.updateText(songArtistMarquee.originalText);
+                    songTitleMarquee._checkNeedsScroll();
+                    songArtistMarquee._checkNeedsScroll();
                 });
             });
         });
@@ -837,13 +837,10 @@
                 this.outerElement = this.innerElement.parentElement; // Reference to the outer .scroll-text
                 this.container = this.outerElement.parentElement; // Reference to .scroll-container
                 this.originalText = '';
-                this.isScrolling = false; // Flag to indicate animation is in progress
+                this.isScrolling = false; // Not actively used for CSS animation, but kept for state logic
                 this.needsScroll = false;
                 this.animationFrameRequest = null;
-                this.initialDelayTimer = null; // Timer for the 2s initial delay
-                this.loopTimer = null; // Timer for the 15s loop interval
-                this.currentAnimationDuration = 8000; // Default/fallback duration
-                this.boundOnAnimationEnd = this._onAnimationEnd.bind(this); // Pre-bind listener
+                // Timers and JS-controlled duration properties removed
             }
 
             _measureWidths() {
@@ -887,96 +884,28 @@
                     const { textWidth, containerWidth } = this._measureWidths();
                     this.needsScroll = textWidth > containerWidth;
 
-                    // Now, update inner span's text content and schedule animation if needed
+                    // Now, update inner span's text content and apply/remove class based on whether scroll is needed
                     if (this.needsScroll) {
-                        console.log(`[${this.innerElement.id}] Needs scroll. Scheduling animation.`);
+                        console.log(`[${this.innerElement.id}] Needs scroll. Applying CSS animation.`);
                         // Add duplicate text with spacing to the inner span
                         this.innerElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
-                        
-                        // Calculate dynamic duration
-                        this._calculateDynamicDuration(); 
-                        
-                        // Set duration on the element's style
-                        this.innerElement.style.animationDuration = `${this.currentAnimationDuration / 1000}s`;
-                        
-                        // Schedule the *first* animation after the initial delay
-                        this.initialDelayTimer = setTimeout(() => {
-                            this._startAnimation();
-                        }, 2000); // 2 second initial delay
-                        
+                        // Add class to enable CSS animation (CSS handles delay and looping)
+                        this.innerElement.classList.add('scrolling-active');
                     } else {
                         console.log(`[${this.innerElement.id}] No scroll needed.`);
                         // Ensure original text is displayed on inner span if no scroll needed
                         this.innerElement.textContent = this.originalText;
-                        // Ensure animation class is removed (should be already, but belt-and-suspenders)
+                        // Ensure animation class is removed
                         this.innerElement.classList.remove('scrolling-active');
                     }
                 });
             }
             
-            _calculateDynamicDuration() {
-                 // Use a clone with the *duplicated text* to measure its total width
-                const outerClone = this.outerElement.cloneNode(true); 
-                const innerClone = outerClone.querySelector('.inner-scroll'); 
-                
-                outerClone.style.display = "inline-block"; 
-                outerClone.style.width = "auto";          
-                outerClone.style.position = "absolute";
-                outerClone.style.visibility = "hidden";
-                // Ensure clone has duplicated text for width measurement
-                innerClone.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText; 
-                
-                document.body.appendChild(outerClone);
-                const fullTextWidth = outerClone.offsetWidth; 
-                document.body.removeChild(outerClone);
-
-                const scrollDistance = fullTextWidth / 2; // We scroll half the duplicated width
-
-                const pixelsPerSecond = 50; 
-                let calculatedDurationMs = (scrollDistance / pixelsPerSecond) * 1000;
-                const minDurationMs = 4000; 
-                const maxDurationMs = 20000;
-                this.currentAnimationDuration = Math.max(minDurationMs, Math.min(calculatedDurationMs, maxDurationMs));
-                console.log(`[${this.innerElement.id}] Calculated duration: ${this.currentAnimationDuration.toFixed(0)}ms`);
-            }
-
-            _startAnimation() {
-                if (!this.needsScroll) return; // Don't start if no longer needed
-                
-                console.log(`[${this.innerElement.id}] Starting animation (duration: ${this.currentAnimationDuration}ms).`);
-                this.isScrolling = true;
-                // Add listener *before* adding class
-                this.innerElement.addEventListener('animationend', this.boundOnAnimationEnd, { once: true });
-                // Add class to trigger CSS animation
-                this.innerElement.classList.add('scrolling-active');
-            }
-
-            _onAnimationEnd() {
-                console.log(`[${this.innerElement.id}] Animation ended.`);
-                this.isScrolling = false;
-                // Remove class now that animation is done.
-                this.innerElement.classList.remove('scrolling-active');
-                
-                // Use requestAnimationFrame to defer the explicit transform reset
-                requestAnimationFrame(() => {
-                    // Reset transform just before the next repaint
-                    this.innerElement.style.transform = 'translateX(0)';
-                    // Force reflow might still be useful here as well
-                    void this.innerElement.offsetWidth; 
-                });
-
-                // Schedule the next loop
-                const loopDelay = 15000; // 15 second interval between start of scrolls
-                console.log(`[${this.innerElement.id}] Scheduling next loop in ${loopDelay}ms.`);
-                this.loopTimer = setTimeout(() => {
-                    // Recalculate duration in case text/container changed during pause
-                     if (this.needsScroll) { // Check if still needed before restarting
-                        this._calculateDynamicDuration();
-                        this.innerElement.style.animationDuration = `${this.currentAnimationDuration / 1000}s`;
-                        this._startAnimation();
-                     }
-                }, loopDelay);
-            }
+            // _calculateDynamicDuration method removed
+            
+            // _startAnimation method removed
+            
+            // _onAnimationEnd method removed
 
             updateText(newText) {
                 const textChanged = newText !== this.originalText;
@@ -999,20 +928,14 @@
             }
 
             stop() {
-                 console.log(`[${this.innerElement.id}] Stopping marquee.`);
-                // Clear timers
-                clearTimeout(this.initialDelayTimer);
-                clearTimeout(this.loopTimer);
-                cancelAnimationFrame(this.animationFrameRequest); 
-                
+                 console.log(`[${this.innerElement.id}] Stopping marquee (removing class).`);
+                // Timers removed
+                cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
                 this.isScrolling = false; 
-                
-                // Remove listener if it's somehow still attached
-                this.innerElement.removeEventListener('animationend', this.boundOnAnimationEnd);
                 
                 // Reset visual state by removing class
                 this.innerElement.classList.remove('scrolling-active');
-                // Ensure transform is reset
+                // Ensure transform is reset (base style should handle this)
                 this.innerElement.style.transform = 'translateX(0)'; 
                 
                 // Reset text content on inner span to the base original text
