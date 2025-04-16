@@ -217,11 +217,11 @@
         }
         
         @keyframes scrollText {
-            0%   { transform: translateX(0); }       /* Start position */
-            10%  { transform: translateX(0); }       /* Pause at start */
-            80%  { transform: translateX(calc(-100% - 50px)); } /* Scroll left (adjust -50px based on padding) */
-            90%  { transform: translateX(calc(-100% - 50px)); } /* Pause at end */
-            100% { transform: translateX(0); }       /* Reset for next loop */
+            0%   { transform: translateX(0); }     /* Start position */
+            10%  { transform: translateX(0); }     /* Pause at start */
+            80%  { transform: translateX(-50%); }  /* Scroll halfway (assuming duplicated text) */
+            90%  { transform: translateX(-50%); }  /* Pause at end */
+            100% { transform: translateX(0); }     /* Reset for next loop */
         }
         
         .scroll-container {
@@ -633,7 +633,9 @@
                         Loading...
                     </div>
                 </div>
-                <div class="song-artist" id="songArtist"></div>
+                <div class="scroll-container">
+                    <div class="scroll-text song-artist" id="songArtist"></div>
+                </div>
             </div>
         </div>
         
@@ -810,6 +812,31 @@
                 console.error(message, error);
             }
         }
+
+        // Helper function to apply marquee effect if needed
+        function applyMarqueeIfNeeded(element, originalText) {
+            const scrollContainer = element.parentElement; // Get the direct parent (.scroll-container)
+            
+            // Reset text content first to get accurate scrollWidth measurement
+            element.textContent = originalText;
+            element.classList.remove('scrolling-active'); // Remove class temporarily
+
+            // Check if text overflows the container AFTER setting original text
+            // Use a small delay or offsetHeight to ensure DOM update before measurement
+            requestAnimationFrame(() => {
+                if (element.scrollWidth > scrollContainer.clientWidth) {
+                    // Duplicate text content with spacing for continuous scroll
+                    element.textContent = originalText + '\u00A0\u00A0\u00A0\u00A0' + originalText; // Using non-breaking spaces
+                    // Add class to enable scrolling animation
+                    element.classList.add('scrolling-active');
+                } else {
+                    // Ensure original text is set if no overflow
+                    element.textContent = originalText; 
+                    // Keep class removed if no overflow
+                    element.classList.remove('scrolling-active');
+                }
+            });
+        }
         
         // Function to fetch and display song info
         function updateNowPlaying() {
@@ -854,9 +881,17 @@
                                 container.style.animation = 'fadeIn 0.5s ease-in-out';
                             }
                             
-                            document.getElementById('songTitle').textContent = data.title;
-                            document.getElementById('songTitle').classList.remove('not-playing');
-                            document.getElementById('songArtist').textContent = data.artist + (data.album ? ` • ${data.album}` : '');
+                            const songTitleEl = document.getElementById('songTitle');
+                            const songArtistEl = document.getElementById('songArtist');
+                            
+                            const titleText = data.title;
+                            const artistAlbumText = data.artist + (data.album ? ` • ${data.album}` : '');
+                            
+                            songTitleEl.classList.remove('not-playing');
+                            
+                            // Apply text and check for marquee
+                            applyMarqueeIfNeeded(songTitleEl, titleText);
+                            applyMarqueeIfNeeded(songArtistEl, artistAlbumText);
                             
                             // Update artwork
                             const artworkContainer = document.getElementById('artworkContainer');
@@ -878,28 +913,33 @@
                                 artworkContainer.className = 'note-icon';
                             }
                             
-                            // Enable scrolling animation if text is too long
-                            const songTitleEl = document.getElementById('songTitle');
-                            const scrollContainer = songTitleEl.parentElement; // Get the direct parent (.scroll-container)
+                            // Marquee logic is now handled by applyMarqueeIfNeeded
                             
-                            // Check if text overflows the container
-                            if (songTitleEl.scrollWidth > scrollContainer.clientWidth) {
-                                // Add class to enable scrolling animation
-                                songTitleEl.classList.add('scrolling-active');
-                            } else {
-                                // Remove class to disable scrolling animation
-                                songTitleEl.classList.remove('scrolling-active');
-                            }
                         } else {
                             // Stop animation and clear text if not playing or error
                             const songTitleEl = document.getElementById('songTitle');
+                            const songArtistEl = document.getElementById('songArtist');
                             songTitleEl.classList.remove('scrolling-active');
+                            songArtistEl.classList.remove('scrolling-active');
+                            
+                            // Reset text content to avoid showing duplicated text when stopped
+                            songTitleEl.textContent = previousState?.title || ''; // Use previous state or empty
+                            songArtistEl.textContent = (previousState?.artist || '') + (previousState?.album ? ` • ${previousState.album}` : '');
 
                             // Show error message if there's an error message
                             if (data.error) {
                                 document.getElementById('songTitle').textContent = "Music information unavailable";
-                                document.getElementById('songTitle').classList.add('not-playing');
-                                document.getElementById('songArtist').textContent = "";
+                                const songTitleEl = document.getElementById('songTitle');
+                                const songArtistEl = document.getElementById('songArtist');
+                                
+                                songTitleEl.textContent = "Music information unavailable";
+                                songTitleEl.classList.add('not-playing');
+                                songArtistEl.textContent = ""; // Clear artist/album on error
+                                
+                                // Ensure scrolling is stopped on error
+                                songTitleEl.classList.remove('scrolling-active');
+                                songArtistEl.classList.remove('scrolling-active');
+                                
                                 if (debugMode) {
                                     showDebugError(`Server reports issue: ${data.error}`);
                                 }
