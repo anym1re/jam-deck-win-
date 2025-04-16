@@ -228,13 +228,15 @@
         .scroll-container {
             width: 100%;
             overflow: hidden;
+            padding: 0; /* Ensure no container padding affects text position */
         }
         
         .scroll-text {
             white-space: nowrap;
             display: inline-block; /* Important for width calculation */
-            position: relative; /* Needed for JS transform animation */
-            /* padding-right removed - spacing handled by JS */
+            position: relative; /* Needed for CSS transform animation */
+            padding: 0; /* Ensure no text padding */
+            margin: 0; /* Ensure no text margin */
             /* transition will be added by JS */
         }
         
@@ -915,8 +917,8 @@
                 
                 // Reset visual state by removing class and styles
                 this.textElement.classList.remove('scrolling-active');
-                // The line setting style.animation = 'none' was removed as it conflicts with the class-based animation.
-                this.textElement.style.transform = 'translateX(0)'; // Reset position
+                // Ensure transform is explicitly reset AFTER removing the class
+                this.textElement.style.transform = 'translateX(0)'; 
                 
                 // Reset text content to the base original text
                 this.textElement.textContent = this.originalText; 
