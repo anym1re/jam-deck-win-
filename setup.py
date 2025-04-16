@@ -13,11 +13,14 @@ if os.path.exists(libffi_source) and not os.path.exists(libffi_dest):
 
 APP = ['app.py']
 DATA_FILES = [
-    ('', ['overlay.html', 'music_server.py']),  # Required files
-    ('assets/images', ['assets/images/jamdeck.icns', 'assets/images/jamdeck-template.png']),  # Image assets
-    # Use glob to include all .ttf files, including the new JetBrains Mono ones
-    ('assets/fonts', glob.glob('assets/fonts/*.ttf')), 
-    ('Frameworks', ['libffi.8.dylib']),  # Include libffi in the Frameworks directory
+    # Keep HTML, JS, and CSS at the top level for consistent path resolution
+    ('', ['overlay.html', 'overlay.js', 'overlay.css', 'music_server.py']),
+    # Image assets - specify all directly to ensure they're included
+    ('assets/images', ['assets/images/jamdeck.icns', 'assets/images/jamdeck-template.png']),
+    # Font files with specific handling
+    ('assets/fonts', glob.glob('assets/fonts/*.ttf')),
+    # Include libffi in Frameworks
+    ('Frameworks', ['libffi.8.dylib']),
 ]
 OPTIONS = {
     'argv_emulation': True,

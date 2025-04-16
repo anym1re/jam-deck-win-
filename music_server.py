@@ -141,6 +141,60 @@ class MusicHandler(BaseHTTPRequestHandler):
         path = parsed_path.path
         print(f"Request received: {path}")
         
+        # Serve static files (HTML, CSS, JS)
+        if path == '/' or path.endswith('.html') or path.endswith('.css') or path.endswith('.js'):
+            # If path is just '/', serve overlay.html
+            if path == '/':
+                file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'overlay.html')
+            else:
+                # Remove leading slash and get the file from current directory
+                file_name = path.lstrip('/')
+                file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_name)
+            
+            # Add debugging for file resolution
+            print(f"Static file requested: {path}")
+            print(f"Resolving to path: {file_path}")
+            print(f"File exists: {os.path.exists(file_path)}")
+            
+            try:
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                
+                self.send_response(200)
+                # Set correct content type based on file extension
+                if path.endswith('.html'):
+                    content_type = 'text/html'
+                elif path.endswith('.css'):
+                    content_type = 'text/css'
+                elif path.endswith('.js'):
+                    content_type = 'text/javascript'
+                else:
+                    content_type = 'text/html'  # default for '/' path
+                
+                content_length = len(content)
+                print(f"Serving {path} ({content_length} bytes) as {content_type}")
+                
+                self.send_header('Content-type', content_type)
+                self.send_header('Content-Length', str(content_length))
+                self.send_header('Cache-Control', 'no-cache, must-revalidate')
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            except FileNotFoundError:
+                print(f"ERROR: File not found: {file_path}")
+                self.send_response(404)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(b'File not found')
+                return
+            except Exception as e:
+                print(f"ERROR serving {path}: {str(e)}")
+                self.send_response(500)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(f"Error: {str(e)}".encode())
+                return
+        
         # Route requests
         if path == '/nowplaying':
             print("Handling /nowplaying request")
@@ -249,22 +303,6 @@ class MusicHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(f'Image file not found: {str(e)}'.encode())
                 
-        elif path == '/' or path == '/index.html':
-            print("Serving HTML overlay page")
-            # Serve the HTML page for the overlay
-            try:
-                with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'overlay.html'), 'r', encoding='utf-8') as file:
-                    self.send_response(200)
-                    self.send_header('Content-type', 'text/html')
-                    self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
-                    self.end_headers()
-                    self.wfile.write(file.read().encode('utf-8'))
-            except Exception as e:
-                print(f"Error serving HTML: {e}")
-                self.send_response(500)
-                self.send_header('Content-type', 'text/plain')
-                self.end_headers()
-                self.wfile.write(f"Error reading HTML file: {str(e)}".encode())
         else:
             print(f"404 Not Found: {path}")
             self.send_response(404)
