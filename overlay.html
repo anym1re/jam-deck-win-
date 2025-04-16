@@ -218,13 +218,13 @@
         
         /* --- CSS Animation for Marquee --- */
         @keyframes scrollText {
-            /* Full cycle with long pauses at start and end for a total of 23s */
+            /* Full cycle with long pauses at start and end */
             0%      { transform: translateX(0); }                          /* Start position */
-            10%     { transform: translateX(0); }                          /* Stay at start */
-            20%     { transform: translateX(var(--scroll-distance, -100%)); } /* Scroll to end */
-            27%     { transform: translateX(var(--scroll-distance, -100%)); } /* Hold at end briefly */
-            37%     { transform: translateX(0); }                          /* Return to start */
-            100%    { transform: translateX(0); }                          /* Long pause at start (63% of animation) */
+            15%     { transform: translateX(0); }                          /* Stay at start longer */
+            30%     { transform: translateX(var(--scroll-distance, -100%)); } /* Scroll to end more gradually */
+            40%     { transform: translateX(var(--scroll-distance, -100%)); } /* Hold at end */
+            55%     { transform: translateX(0); }                          /* Return to start more gradually */
+            100%    { transform: translateX(0); }                          /* Long pause at start (45% of animation) */
         }
         
         .scroll-container {
@@ -913,10 +913,11 @@
                         // Calculate a reasonable duration based on text length
                         // Short texts should scroll at a moderate speed, longer ones slightly slower
                         if (textWidth > containerWidth) {
-                            // Base speed: about 100px per second
-                            // For a 300px scroll, that's 3 seconds of scroll time
+                            // Slow down the scrolling speed significantly
+                            // Base speed: about 50px per second (previously 100px)
+                            // For a 300px scroll, that's 6 seconds of scroll time
                             const scrollAmount = textWidth - containerWidth;
-                            const scrollSpeed = 100; // pixels per second
+                            const scrollSpeed = 50; // pixels per second (half the previous speed)
                             const scrollTime = scrollAmount / scrollSpeed;
                             
                             // Total = 2s initial delay + scroll time + 1.5s pause + scroll time back + remaining time
@@ -925,8 +926,9 @@
                             
                             // Adjust only if the scrolling would take longer than 40% of the full duration
                             if (scrollComponent > baseDuration * 0.4) {
-                                // Cap at 35s max duration
-                                adjustedDuration = Math.min(35, baseDuration * 1.5);
+                                // Increased max duration to 45s (previously 35s)
+                                // to accommodate slower scrolling
+                                adjustedDuration = Math.min(45, baseDuration * 1.8);
                                 console.log(`[${this.innerElement.id}] Long text, adjusted duration: ${adjustedDuration}s`);
                             }
                         }
