@@ -882,28 +882,29 @@
                 console.log(`[${this.textElement.id}] Performing scroll...`);
                 this.isScrolling = true;
                 
-                // --- Calculate scroll distance based on half the duplicated text width ---
-                // Ensure the element currently holds the duplicated text for measurement
-                const fullText = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
-                if (this.textElement.textContent !== fullText) {
-                     // This shouldn't happen if _checkNeedsScroll worked, but as a fallback
-                     this.textElement.textContent = fullText;
-                }
+                // --- Calculate scroll distance accurately (Original Text + Spaces) ---
+                const { textWidth: originalTextWidth } = this._measureWidths();
 
-                // Use a clone with the *full duplicated text* to measure its total width
-                const clone = this.textElement.cloneNode(true);
-                clone.style.display = "inline-block";
-                clone.style.width = "auto"; // Ensure width is determined by content
-                clone.style.position = "absolute";
-                clone.style.visibility = "hidden";
-                // No need to set textContent again, it's cloned from the element which should have duplicated text
-                document.body.appendChild(clone);
-                const fullTextWidth = clone.offsetWidth;
-                document.body.removeChild(clone);
+                // Measure space width accurately for the current font style
+                const spaceMeasureSpan = document.createElement('span');
+                spaceMeasureSpan.style.visibility = 'hidden';
+                spaceMeasureSpan.style.position = 'absolute';
+                spaceMeasureSpan.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                const computedStyle = window.getComputedStyle(this.textElement);
+                spaceMeasureSpan.style.fontFamily = computedStyle.fontFamily;
+                spaceMeasureSpan.style.fontSize = computedStyle.fontSize;
+                spaceMeasureSpan.style.fontWeight = computedStyle.fontWeight;
+                spaceMeasureSpan.style.fontStyle = computedStyle.fontStyle;
+                spaceMeasureSpan.style.letterSpacing = computedStyle.letterSpacing;
+                spaceMeasureSpan.textContent = '\u00A0'; // Use non-breaking space
+                document.body.appendChild(spaceMeasureSpan);
+                const spaceWidth = spaceMeasureSpan.offsetWidth;
+                document.body.removeChild(spaceMeasureSpan);
+                // console.log(`[${this.textElement.id}] Measured space width: ${spaceWidth}px`); // Optional debug
 
-                // Scroll distance is exactly half the width of the duplicated content
-                const scrollDistance = fullTextWidth / 2;
-                console.log(`[${this.textElement.id}] Full duplicated text width: ${fullTextWidth}px, Scroll distance: ${scrollDistance}px`);
+                // Calculate total scroll distance
+                const scrollDistance = originalTextWidth + (4 * spaceWidth);
+                // console.log(`[${this.textElement.id}] Original width: ${originalTextWidth}px, Scroll distance: ${scrollDistance}px`); // Optional debug
                 // --- End distance calculation ---
 
                 // --- Calculate dynamic duration ---
@@ -919,40 +920,36 @@
                 // --- End dynamic duration calculation ---
 
                 // Apply animation using calculated duration
-                // Define the event listener function for transition end
-                const onTransitionEnd = (event) => {
-                    // Ensure the event is for the transform property and the correct element
-                    if (event.propertyName === 'transform' && event.target === this.textElement) {
-                        
-                        // Reset position without animation *immediately* after transition ends
-                        this.textElement.style.transitionDuration = '0s'; // Set duration to 0 first
-                        this.textElement.style.transform = 'translateX(0)';
-                        
-                        // Force reflow to ensure styles apply instantly
-                        void this.textElement.offsetWidth; 
-                        
-                        // Transition duration will be reset correctly before the next scroll in _performScroll
-
-                        console.log(`[${this.textElement.id}] Scroll transition finished. Scheduling next scroll (${this.scrollInterval}ms)`);
-                        this.isScrolling = false;
-                        
-                        // Remove the listener immediately (it's marked { once: true } anyway, but good practice)
-                        // No need to remove explicitly due to { once: true } option below
-                        // this.textElement.removeEventListener('transitionend', onTransitionEnd); 
-                        
-                        // Schedule the next scroll immediately after the transition ends
-                        this._scheduleNextScroll(this.scrollInterval); 
-                    }
-                };
-
-                // Add the one-time event listener *before* starting the transition
-                this.textElement.addEventListener('transitionend', onTransitionEnd, { once: true });
-
-                // Apply animation using calculated duration - this triggers the transition
                 this.textElement.style.transition = `transform ${actualDurationSec}s linear`;
                 this.textElement.style.transform = `translateX(-${scrollDistance}px)`;
 
-                // --- setTimeout removed - reset is now handled by transitionend event ---
+                // --- Reset using setTimeout slightly before animation ends ---
+                const resetDelay = Math.max(0, actualDurationMs - 50); // Reset 50ms before theoretical end
+                
+                // Schedule the visual reset
+                this.resetTimer = setTimeout(() => {
+                    if (!this.isScrolling) return; // Check if scrolling was stopped prematurely
+                    
+                    // Reset position without animation
+                    this.textElement.style.transition = 'none';
+                    this.textElement.style.transform = 'translateX(0)';
+                    
+                    // Force reflow to ensure reset is applied visually
+                    void this.textElement.offsetWidth; 
+                    
+                    console.log(`[${this.textElement.id}] Scroll visually reset.`);
+                    
+                }, resetDelay);
+
+                // Schedule the state update and next scroll after the full duration
+                this.scrollTimer = setTimeout(() => {
+                    if (!this.isScrolling) return; // Check if scrolling was stopped prematurely
+
+                    this.isScrolling = false;
+                    console.log(`[${this.textElement.id}] Scroll finished. Scheduling next scroll (${this.scrollInterval}ms)`);
+                    this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll after the interval
+                }, actualDurationMs); 
+                // --- End setTimeout reset logic ---
             }
 
             _scheduleNextScroll(delay) {
@@ -994,7 +991,8 @@
 
             stop() {
                  console.log(`[${this.textElement.id}] Stopping marquee.`);
-                clearTimeout(this.scrollTimer);
+                clearTimeout(this.scrollTimer); // Timer for scheduling next scroll
+                clearTimeout(this.resetTimer); // Timer for visual reset
                 cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
                 this.isScrolling = false;
                 // Don't reset needsScroll here, let _checkNeedsScroll determine it
