@@ -218,9 +218,10 @@
         
         /* --- CSS Animation for Marquee --- */
         @keyframes scrollText {
-            /* Simple animation from start to halfway point */
+            /* Animate out (0% -> 50%) and back (50% -> 100%) */
             0%   { transform: translateX(0); }     
-            100% { transform: translateX(-50%); } 
+            50%  { transform: translateX(-50%); } 
+            100% { transform: translateX(0); } 
         }
         
         .scroll-container {
@@ -251,7 +252,7 @@
             /* animation-duration set by JS */
             animation-timing-function: linear;
             animation-iteration-count: 1; /* Run only once per class application */
-            animation-fill-mode: forwards; /* Hold end state until class removed */
+            /* animation-fill-mode removed, not needed */
         }
         
         .not-playing {
@@ -957,9 +958,9 @@
                 // Remove class now that animation is done
                 this.innerElement.classList.remove('scrolling-active');
                 
-                // Explicitly reset transform to avoid potential glitches from fill-mode
-                this.innerElement.style.transform = 'translateX(0)';
-                // Force reflow
+                // Transform reset removed - animation now returns to translateX(0)
+                
+                // Force reflow might still be useful after removing class
                 void this.innerElement.offsetWidth; 
 
                 // Schedule the next loop
