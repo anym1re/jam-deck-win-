@@ -216,13 +216,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        @keyframes scrollText {
-            0%   { transform: translateX(0); }     /* Start position */
-            10%  { transform: translateX(0); }     /* Pause at start */
-            80%  { transform: translateX(-50%); }  /* Scroll halfway (assuming duplicated text) */
-            90%  { transform: translateX(-50%); }  /* Pause at end */
-            100% { transform: translateX(0); }     /* Reset for next loop */
-        }
+        /* Keyframes removed - animation handled by JS */
         
         .scroll-container {
             width: 100%;
@@ -231,14 +225,13 @@
         
         .scroll-text {
             white-space: nowrap;
-            display: inline-block; /* Important for scrollWidth calculation */
-            padding-right: 50px; /* Space added to the end before looping */
-            /* Animation is applied via JS now */
+            display: inline-block; /* Important for width calculation */
+            position: relative; /* Needed for JS transform animation */
+            /* padding-right removed - spacing handled by JS */
+            /* transition will be added by JS */
         }
-
-        .scroll-text.scrolling-active {
-            animation: scrollText 15s linear infinite; /* Adjust duration as needed */
-        }
+        
+        /* .scrolling-active class removed */
         
         .not-playing {
             font-style: italic;
@@ -798,6 +791,148 @@
                 setSceneStorage('musicPlayerWidth', width);
             });
         });
+
+        // --- New Marquee Controller Logic ---
+        class MarqueeController {
+            constructor(textElementId) {
+                this.textElement = document.getElementById(textElementId);
+                this.container = this.textElement.parentElement;
+                this.originalText = '';
+                this.isScrolling = false;
+                this.needsScroll = false;
+                this.scrollTimer = null;
+                this.initialDelay = 2000; // 2 seconds
+                this.scrollInterval = 15000; // 15 seconds
+                this.scrollDuration = 8000; // 8 seconds
+                this.animationFrameRequest = null;
+            }
+
+            _measureWidths() {
+                // Temporarily reset to original text for accurate measurement
+                const currentText = this.textElement.textContent;
+                this.textElement.textContent = this.originalText;
+                this.textElement.style.transform = 'translateX(0)'; // Ensure no transform affects width
+                this.textElement.style.transition = 'none'; // Ensure no transition affects width
+
+                const containerWidth = this.container.clientWidth;
+                
+                // Use a clone for accurate text width measurement without layout shifts
+                const clone = this.textElement.cloneNode(true);
+                clone.style.display = "inline-block";
+                clone.style.width = "auto";
+                clone.style.position = "absolute";
+                clone.style.visibility = "hidden";
+                document.body.appendChild(clone);
+                const textWidth = clone.offsetWidth;
+                document.body.removeChild(clone);
+
+                // Restore original state (might be duplicated text if needsScroll)
+                this.textElement.textContent = currentText; 
+
+                return { textWidth, containerWidth };
+            }
+
+            _checkNeedsScroll() {
+                // Reset state before check
+                this.textElement.textContent = this.originalText;
+                this.textElement.style.transform = 'translateX(0)';
+                this.textElement.style.transition = 'none';
+                this.needsScroll = false;
+
+                // Use rAF to ensure DOM is updated before measuring
+                cancelAnimationFrame(this.animationFrameRequest); // Cancel previous request if any
+                this.animationFrameRequest = requestAnimationFrame(() => {
+                    const { textWidth, containerWidth } = this._measureWidths();
+                    this.needsScroll = textWidth > containerWidth;
+
+                    if (this.needsScroll) {
+                        // Add duplicate text with spacing
+                        this.textElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
+                        this._scheduleNextScroll(this.initialDelay); // Schedule first scroll
+                    } else {
+                        // Ensure original text is displayed if no scroll needed
+                        this.textElement.textContent = this.originalText;
+                    }
+                });
+            }
+
+            _performScroll() {
+                if (!this.needsScroll || this.isScrolling) return;
+
+                this.isScrolling = true;
+                
+                // Measure original text width for scroll distance calculation
+                const { textWidth } = this._measureWidths(); // Re-measure original text width
+                const scrollDistance = textWidth + (4 * 8); // Width of original text + 4 non-breaking spaces (approx 8px each)
+
+                // Apply animation
+                const duration = this.scrollDuration / 1000;
+                this.textElement.style.transition = `transform ${duration}s linear`;
+                this.textElement.style.transform = `translateX(-${scrollDistance}px)`;
+
+                // Reset after scroll completes
+                this.scrollTimer = setTimeout(() => {
+                    // Reset position without animation
+                    this.textElement.style.transition = 'none';
+                    this.textElement.style.transform = 'translateX(0)';
+
+                    // Force reflow before re-enabling transition for the next cycle
+                    void this.textElement.offsetWidth; 
+
+                    this.isScrolling = false;
+                    this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll
+                }, this.scrollDuration);
+            }
+
+            _scheduleNextScroll(delay) {
+                clearTimeout(this.scrollTimer);
+                if (!this.needsScroll) return;
+
+                this.scrollTimer = setTimeout(() => {
+                    this._performScroll();
+                }, delay);
+            }
+
+            updateText(newText) {
+                // Only update if text actually changed
+                if (newText === this.originalText) {
+                    // If text is the same, but maybe container resized, re-check
+                    this._checkNeedsScroll();
+                    return;
+                }
+
+                this.stop(); // Stop existing timers/animations
+                this.originalText = newText || ''; // Handle null/undefined
+                this.textElement.textContent = this.originalText; // Set initial text
+                
+                if (this.originalText) {
+                    this._checkNeedsScroll(); // Check if new text needs scrolling
+                } else {
+                    this.needsScroll = false; // No text, no scroll
+                }
+            }
+
+            stop() {
+                clearTimeout(this.scrollTimer);
+                cancelAnimationFrame(this.animationFrameRequest);
+                this.isScrolling = false;
+                this.needsScroll = false;
+                this.textElement.style.transition = 'none';
+                this.textElement.style.transform = 'translateX(0)';
+                this.textElement.textContent = this.originalText; // Reset to original text (might be empty)
+            }
+            
+            clear() {
+                this.stop();
+                this.originalText = '';
+                this.textElement.textContent = '';
+            }
+        }
+
+        // Instantiate controllers for title and artist
+        const songTitleMarquee = new MarqueeController('songTitle');
+        const songArtistMarquee = new MarqueeController('songArtist');
+        // --- End Marquee Controller Logic ---
         
         // Function to show debug error
         function showDebugError(message, error) {
@@ -813,30 +948,7 @@
             }
         }
 
-        // Helper function to apply marquee effect if needed
-        function applyMarqueeIfNeeded(element, originalText) {
-            const scrollContainer = element.parentElement; // Get the direct parent (.scroll-container)
-            
-            // Reset text content first to get accurate scrollWidth measurement
-            element.textContent = originalText;
-            element.classList.remove('scrolling-active'); // Remove class temporarily
-
-            // Check if text overflows the container AFTER setting original text
-            // Use a small delay or offsetHeight to ensure DOM update before measurement
-            requestAnimationFrame(() => {
-                if (element.scrollWidth > scrollContainer.clientWidth) {
-                    // Duplicate text content with spacing for continuous scroll
-                    element.textContent = originalText + '\u00A0\u00A0\u00A0\u00A0' + originalText; // Using non-breaking spaces
-                    // Add class to enable scrolling animation
-                    element.classList.add('scrolling-active');
-                } else {
-                    // Ensure original text is set if no overflow
-                    element.textContent = originalText; 
-                    // Keep class removed if no overflow
-                    element.classList.remove('scrolling-active');
-                }
-            });
-        }
+        // Old applyMarqueeIfNeeded function removed
         
         // Function to fetch and display song info
         function updateNowPlaying() {
@@ -889,9 +1001,9 @@
                             
                             songTitleEl.classList.remove('not-playing');
                             
-                            // Apply text and check for marquee
-                            applyMarqueeIfNeeded(songTitleEl, titleText);
-                            applyMarqueeIfNeeded(songArtistEl, artistAlbumText);
+                            // Update text using Marquee Controllers
+                            songTitleMarquee.updateText(titleText);
+                            songArtistMarquee.updateText(artistAlbumText);
                             
                             // Update artwork
                             const artworkContainer = document.getElementById('artworkContainer');
@@ -913,38 +1025,25 @@
                                 artworkContainer.className = 'note-icon';
                             }
                             
-                            // Marquee logic is now handled by applyMarqueeIfNeeded
+                            // Marquee logic is now handled by the controllers
                             
                         } else {
-                            // Stop animation and clear text if not playing or error
-                            const songTitleEl = document.getElementById('songTitle');
-                            const songArtistEl = document.getElementById('songArtist');
-                            songTitleEl.classList.remove('scrolling-active');
-                            songArtistEl.classList.remove('scrolling-active');
-                            
-                            // Reset text content to avoid showing duplicated text when stopped
-                            songTitleEl.textContent = previousState?.title || ''; // Use previous state or empty
-                            songArtistEl.textContent = (previousState?.artist || '') + (previousState?.album ? ` • ${previousState.album}` : '');
+                            // Stop marquees and clear text if not playing or error
+                            songTitleMarquee.clear(); // Clear text and stop animation
+                            songArtistMarquee.clear(); // Clear text and stop animation
 
                             // Show error message if there's an error message
                             if (data.error) {
-                                document.getElementById('songTitle').textContent = "Music information unavailable";
-                                const songTitleEl = document.getElementById('songTitle');
-                                const songArtistEl = document.getElementById('songArtist');
-                                
-                                songTitleEl.textContent = "Music information unavailable";
-                                songTitleEl.classList.add('not-playing');
-                                songArtistEl.textContent = ""; // Clear artist/album on error
-                                
-                                // Ensure scrolling is stopped on error
-                                songTitleEl.classList.remove('scrolling-active');
-                                songArtistEl.classList.remove('scrolling-active');
+                                // Display error message in title area, stop its marquee
+                                songTitleMarquee.updateText("Music information unavailable"); 
+                                document.getElementById('songTitle').classList.add('not-playing');
+                                // Artist marquee already cleared by .clear() above
                                 
                                 if (debugMode) {
                                     showDebugError(`Server reports issue: ${data.error}`);
                                 }
                             } else {
-                                // Hide container when not playing
+                                // Hide container when not playing (marquees already stopped/cleared)
                                 if (containerVisible) {
                                     container.classList.add('hidden');
                                     containerVisible = false;
@@ -968,9 +1067,11 @@
                 errorCount++;
                 
                 if (errorCount > 3) {
-                    document.getElementById('songTitle').textContent = "Connection error";
+                    // Stop marquees and show connection error
+                    songTitleMarquee.updateText("Connection error");
+                    songArtistMarquee.clear(); // Clear artist line
                     document.getElementById('songTitle').classList.add('not-playing');
-                    document.getElementById('songArtist').textContent = "";
+                    
                     showDebugError('Error fetching now playing info', error);
                 }
             });
