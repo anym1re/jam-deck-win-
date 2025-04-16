@@ -1024,9 +1024,24 @@
                             
                             songTitleEl.classList.remove('not-playing');
                             
-                            // Update text using Marquee Controllers
-                            songTitleMarquee.updateText(titleText);
-                            songArtistMarquee.updateText(artistAlbumText);
+                            // Update text using Marquee Controllers ONLY if text changed
+                            if (!previousState || titleText !== previousState.title) {
+                                console.log(`[Main] Title changed: "${previousState?.title}" -> "${titleText}". Updating marquee.`);
+                                songTitleMarquee.updateText(titleText);
+                            } else {
+                                // If text didn't change, but maybe container size did, 
+                                // we could potentially re-check scroll needs without triggering initial delay.
+                                // For now, let's keep it simple and only update on text change.
+                                // songTitleMarquee._checkNeedsScroll(false); // Example: re-check without initial delay
+                            }
+                            
+                            const prevArtistAlbumText = (previousState?.artist || '') + (previousState?.album ? ` • ${previousState.album}` : '');
+                            if (!previousState || artistAlbumText !== prevArtistAlbumText) {
+                                console.log(`[Main] Artist/Album changed: "${prevArtistAlbumText}" -> "${artistAlbumText}". Updating marquee.`);
+                                songArtistMarquee.updateText(artistAlbumText);
+                            } else {
+                                // songArtistMarquee._checkNeedsScroll(false); // Example: re-check without initial delay
+                            }
                             
                             // Update artwork
                             const artworkContainer = document.getElementById('artworkContainer');
