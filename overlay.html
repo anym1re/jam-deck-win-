@@ -917,7 +917,7 @@
                     this.isScrolling = false;
                     // No need to re-apply transition here, it's applied at the start of _performScroll
                     this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll after the interval
-                }, this.scrollDuration);
+                }, actualDurationMs); // Use the calculated duration for the timeout
             }
 
             _scheduleNextScroll(delay) {
