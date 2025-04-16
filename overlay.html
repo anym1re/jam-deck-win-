@@ -217,9 +217,11 @@
         }
         
         @keyframes scrollText {
-            0% { transform: translateX(0); }
-            40% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
+            0%   { transform: translateX(0); }       /* Start position */
+            10%  { transform: translateX(0); }       /* Pause at start */
+            80%  { transform: translateX(calc(-100% - 50px)); } /* Scroll left (adjust -50px based on padding) */
+            90%  { transform: translateX(calc(-100% - 50px)); } /* Pause at end */
+            100% { transform: translateX(0); }       /* Reset for next loop */
         }
         
         .scroll-container {
@@ -229,8 +231,13 @@
         
         .scroll-text {
             white-space: nowrap;
-            display: inline-block;
-            padding-right: 50px;
+            display: inline-block; /* Important for scrollWidth calculation */
+            padding-right: 50px; /* Space added to the end before looping */
+            /* Animation is applied via JS now */
+        }
+
+        .scroll-text.scrolling-active {
+            animation: scrollText 15s linear infinite; /* Adjust duration as needed */
         }
         
         .not-playing {
@@ -873,14 +880,21 @@
                             
                             // Enable scrolling animation if text is too long
                             const songTitleEl = document.getElementById('songTitle');
-                            const scrollContainer = document.querySelector('.scroll-container');
+                            const scrollContainer = songTitleEl.parentElement; // Get the direct parent (.scroll-container)
                             
+                            // Check if text overflows the container
                             if (songTitleEl.scrollWidth > scrollContainer.clientWidth) {
-                                songTitleEl.style.animation = 'scrollText 15s linear infinite';
+                                // Add class to enable scrolling animation
+                                songTitleEl.classList.add('scrolling-active');
                             } else {
-                                songTitleEl.style.animation = 'none';
+                                // Remove class to disable scrolling animation
+                                songTitleEl.classList.remove('scrolling-active');
                             }
                         } else {
+                            // Stop animation and clear text if not playing or error
+                            const songTitleEl = document.getElementById('songTitle');
+                            songTitleEl.classList.remove('scrolling-active');
+
                             // Show error message if there's an error message
                             if (data.error) {
                                 document.getElementById('songTitle').textContent = "Music information unavailable";
