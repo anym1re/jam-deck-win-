@@ -2,6 +2,7 @@
 from setuptools import setup
 import os
 import shutil
+import glob
 
 # Copy libffi.8.dylib to the current directory if it exists
 libffi_source = '/opt/homebrew/Cellar/libffi/3.4.7/lib/libffi.8.dylib'
@@ -14,6 +15,7 @@ APP = ['app.py']
 DATA_FILES = [
     ('', ['overlay.html', 'music_server.py']),  # Required files
     ('assets/images', ['assets/images/jamdeck.icns', 'assets/images/jamdeck-template.png']),  # Image assets
+    ('assets/fonts', glob.glob('assets/fonts/*.ttf')), # Include all TTF fonts
     ('Frameworks', ['libffi.8.dylib']),  # Include libffi in the Frameworks directory
 ]
 OPTIONS = {
