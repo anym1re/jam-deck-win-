@@ -881,12 +881,30 @@
                 console.log(`[${this.textElement.id}] Performing scroll...`);
                 this.isScrolling = true;
                 
-                // Measure original text width ONCE for scroll distance calculation
-                // We need the width of the *original* text segment, not the duplicated one.
-                const { textWidth: originalTextWidth } = this._measureWidths(); 
-                // Estimate space width (can vary slightly by font, adjust if needed)
-                const spaceWidth = this.textElement.getBoundingClientRect().width / this.textElement.textContent.length; 
-                const scrollDistance = originalTextWidth + (4 * spaceWidth); // Width of original text + 4 spaces
+                // --- Calculate scroll distance more accurately ---
+                const { textWidth: originalTextWidth } = this._measureWidths();
+
+                // Measure space width accurately for the current font style
+                const spaceMeasureSpan = document.createElement('span');
+                spaceMeasureSpan.style.visibility = 'hidden';
+                spaceMeasureSpan.style.position = 'absolute';
+                spaceMeasureSpan.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                // Apply relevant styles from the target element
+                const computedStyle = window.getComputedStyle(this.textElement);
+                spaceMeasureSpan.style.fontFamily = computedStyle.fontFamily;
+                spaceMeasureSpan.style.fontSize = computedStyle.fontSize;
+                spaceMeasureSpan.style.fontWeight = computedStyle.fontWeight;
+                spaceMeasureSpan.style.fontStyle = computedStyle.fontStyle;
+                spaceMeasureSpan.style.letterSpacing = computedStyle.letterSpacing;
+                spaceMeasureSpan.textContent = '\u00A0'; // Use non-breaking space for measurement
+                document.body.appendChild(spaceMeasureSpan);
+                const spaceWidth = spaceMeasureSpan.offsetWidth;
+                document.body.removeChild(spaceMeasureSpan);
+                console.log(`[${this.textElement.id}] Measured space width: ${spaceWidth}px`);
+
+                // Calculate total scroll distance (original text + 4 spaces)
+                const scrollDistance = originalTextWidth + (4 * spaceWidth);
+                // --- End distance calculation ---
 
                 // --- Calculate dynamic duration ---
                 const pixelsPerSecond = 50; // Adjust scroll speed (pixels per second)
