@@ -233,16 +233,22 @@
         
         .scroll-text {
             white-space: nowrap;
-            display: inline-block; /* Important for width calculation */
+            display: inline-block; /* Outer element handles layout */
+            padding: 0; 
+            margin: 0; 
+            /* Position and transform moved to inner span */
+        }
+
+        .scroll-text .inner-scroll {
+            display: inline-block; /* Ensure inner span behaves correctly */
             position: relative; /* Needed for CSS transform animation */
-            padding: 0; /* Ensure no text padding */
-            margin: 0; /* Ensure no text margin */
             transform: translateX(0); /* Explicitly set base position */
-            /* transition will be added by JS */
+            padding: 0;
+            margin: 0;
         }
         
-        /* Apply animation via this class */
-        .scroll-text.scrolling-active {
+        /* Apply animation via this class to the inner span */
+        .scroll-text .inner-scroll.scrolling-active {
             /* Apply animation with initial delay */
             animation-name: scrollText;
             animation-duration: 15s;
@@ -641,12 +647,14 @@
             <div id="artworkContainer" class="note-icon">♪</div>
             <div class="song-info">
                 <div class="scroll-container">
-                    <div class="scroll-text song-title" id="songTitle">
-                        Loading...
+                    <div class="scroll-text song-title" id="songTitleContainer">
+                        <span class="inner-scroll" id="songTitle">Loading...</span>
                     </div>
                 </div>
                 <div class="scroll-container">
-                    <div class="scroll-text song-artist" id="songArtist"></div>
+                    <div class="scroll-text song-artist" id="songArtistContainer">
+                        <span class="inner-scroll" id="songArtist"></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -825,11 +833,13 @@
 
         // --- New Marquee Controller Logic ---
         class MarqueeController {
-            constructor(textElementId) {
-                this.textElement = document.getElementById(textElementId);
-                this.container = this.textElement.parentElement;
+            // textElementId now refers to the ID of the inner span
+            constructor(textElementId) { 
+                this.innerElement = document.getElementById(textElementId); // Reference to the inner span
+                this.outerElement = this.innerElement.parentElement; // Reference to the outer .scroll-text
+                this.container = this.outerElement.parentElement; // Reference to .scroll-container
                 this.originalText = '';
-                this.isScrolling = false;
+                this.isScrolling = false; // Not used for CSS animation, but kept for state logic
                 this.needsScroll = false;
                 // Timers and duration properties removed - handled by CSS
                 this.animationFrameRequest = null;
@@ -839,16 +849,20 @@
                 // Measure container width directly
                 const containerWidth = this.container.clientWidth;
                 
-                // Use a clone with the original text for accurate text width measurement
-                const clone = this.textElement.cloneNode(true);
-                clone.style.display = "inline-block";
-                clone.style.width = "auto";
-                clone.style.position = "absolute";
-                clone.style.visibility = "hidden";
-                clone.textContent = this.originalText; // Ensure clone has original text
-                document.body.appendChild(clone);
-                const textWidth = clone.offsetWidth;
-                document.body.removeChild(clone);
+                // Use a clone of the *outer* element with original text set on the *inner* element
+                // This measures how much space the original text would take within the layout structure
+                const outerClone = this.outerElement.cloneNode(true); // Clone the outer .scroll-text
+                const innerClone = outerClone.querySelector('.inner-scroll'); // Find inner span in clone
+                
+                outerClone.style.display = "inline-block"; // Ensure correct display for measurement
+                outerClone.style.width = "auto";          // Let width be determined by content
+                outerClone.style.position = "absolute";
+                outerClone.style.visibility = "hidden";
+                innerClone.textContent = this.originalText; // Set original text on the inner span clone
+                
+                document.body.appendChild(outerClone);
+                const textWidth = outerClone.offsetWidth; // Measure the width of the outer clone
+                document.body.removeChild(outerClone);
 
                 // Return measured widths without modifying the live element here
                 return { textWidth, containerWidth };
@@ -856,15 +870,14 @@
 
             _checkNeedsScroll() { // Removed triggerInitialScroll parameter
                 // Clear any pending animation frame requests for measurement
-                cancelAnimationFrame(this.animationFrameRequest); 
+                cancelAnimationFrame(this.animationFrameRequest);
                 
-                // Reset visual state before measurement (remove animation class)
-                this.textElement.classList.remove('scrolling-active');
-                this.textElement.style.transform = 'translateX(0)'; // Ensure reset
-                // The line setting style.animation = 'none' was removed as it conflicts with the class-based animation.
+                // Reset visual state before measurement (remove animation class from inner span)
+                this.innerElement.classList.remove('scrolling-active');
+                this.innerElement.style.transform = 'translateX(0)'; // Ensure inner span is reset
                 
-                // Set text content to original for measurement consistency
-                this.textElement.textContent = this.originalText; 
+                // Set text content on inner span to original for measurement consistency
+                this.innerElement.textContent = this.originalText;
 
                 // Use rAF to ensure DOM is updated before measuring
                 this.animationFrameRequest = requestAnimationFrame(() => {
@@ -872,19 +885,19 @@
                     const { textWidth, containerWidth } = this._measureWidths();
                     this.needsScroll = textWidth > containerWidth;
 
-                    // Now, update text content and apply/remove class based on whether scroll is needed
+                    // Now, update inner span's text content and apply/remove class based on whether scroll is needed
                     if (this.needsScroll) {
-                        console.log(`[${this.textElement.id}] Needs scroll. Applying CSS animation.`);
-                        // Add duplicate text with spacing
-                        this.textElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
-                        // Add class to enable CSS animation
-                        this.textElement.classList.add('scrolling-active');
+                        console.log(`[${this.innerElement.id}] Needs scroll. Applying CSS animation.`);
+                        // Add duplicate text with spacing to the inner span
+                        this.innerElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
+                        // Add class to the inner span to enable CSS animation
+                        this.innerElement.classList.add('scrolling-active');
                     } else {
-                        console.log(`[${this.textElement.id}] No scroll needed.`);
-                        // Ensure original text is displayed if no scroll needed
-                        this.textElement.textContent = this.originalText;
-                        // Ensure animation class is removed
-                        this.textElement.classList.remove('scrolling-active');
+                        console.log(`[${this.innerElement.id}] No scroll needed.`);
+                        // Ensure original text is displayed on inner span if no scroll needed
+                        this.innerElement.textContent = this.originalText;
+                        // Ensure animation class is removed from inner span
+                        this.innerElement.classList.remove('scrolling-active');
                     }
                 });
             }
@@ -897,41 +910,41 @@
                 const textChanged = newText !== this.originalText;
                 
                 // Stop any ongoing scroll/timers before updating
-                this.stop(); // Ensures animation class is removed and text reset
+                this.stop(); // Ensures animation class is removed from inner span and text reset
                 
                 this.originalText = newText || ''; // Handle null/undefined
-                this.textElement.textContent = this.originalText; // Set initial text
+                this.innerElement.textContent = this.originalText; // Set initial text on inner span
                 
                 if (this.originalText) {
-                    // Check if scroll is needed and apply/remove class
+                    // Check if scroll is needed and apply/remove class to inner span
                     this._checkNeedsScroll(); 
                 } else {
-                    // No text, ensure needsScroll is false and element is empty
+                    // No text, ensure needsScroll is false and inner element is empty
                     this.needsScroll = false; 
-                    this.textElement.textContent = '';
-                    this.textElement.classList.remove('scrolling-active'); // Ensure class is removed
+                    this.innerElement.textContent = '';
+                    this.innerElement.classList.remove('scrolling-active'); // Ensure class is removed from inner span
                 }
             }
 
             stop() {
-                 console.log(`[${this.textElement.id}] Stopping marquee (removing class).`);
+                 console.log(`[${this.innerElement.id}] Stopping marquee (removing class).`);
                 // Timers removed
                 cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
-                this.isScrolling = false; // Keep for potential future state checks, though not used for animation now
+                this.isScrolling = false; 
                 
-                // Reset visual state by removing class
-                this.textElement.classList.remove('scrolling-active');
-                // Let the base .scroll-text CSS rule handle the transform: translateX(0)
+                // Reset visual state by removing class from inner span
+                this.innerElement.classList.remove('scrolling-active');
+                // Let the base .inner-scroll CSS rule handle the transform: translateX(0)
                 
-                // Reset text content to the base original text
-                this.textElement.textContent = this.originalText; 
+                // Reset text content on inner span to the base original text
+                this.innerElement.textContent = this.originalText; 
             }
             
             clear() {
-                 console.log(`[${this.textElement.id}] Clearing marquee.`);
+                 console.log(`[${this.innerElement.id}] Clearing marquee.`);
                 this.stop();
                 this.originalText = '';
-                this.textElement.textContent = '';
+                this.innerElement.textContent = ''; // Clear text on inner span
             }
         }
 
