@@ -8,12 +8,14 @@ import sys
 import zmq
 import signal
 import atexit
+import socket
 
 # Version information
 VERSION = "1.1.2"
 
-# Set port for the server
-PORT = 8080
+# Set starting port for the server
+START_PORT = 8080
+MAX_PORT_ATTEMPTS = 10 # Limit how many ports we try
 
 # Initialize ZMQ context as None - we'll create it when needed and clean it up on exit
 zmq_context = None
@@ -270,36 +272,75 @@ class MusicHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"404 Not Found")
 
-# Start the web server
+# Start the web server, finding an available port
 def run_server():
+    httpd = None
+    actual_port = -1
+    
+    # Try ports starting from START_PORT
+    for i in range(MAX_PORT_ATTEMPTS):
+        port_to_try = START_PORT + i
+        try:
+            # Initialize ZMQ context if needed (do this before server potentially fails)
+            global zmq_context
+            if zmq_context is None:
+                zmq_context = zmq.Context()
+                print("ZMQ context initialized") # Keep this informational message
+
+            server_address = ('', port_to_try)
+            httpd = HTTPServer(server_address, MusicHandler)
+            actual_port = port_to_try
+            
+            # IMPORTANT: Print the port for the parent process BEFORE other messages
+            print(f"JAMDECK_PORT={actual_port}")
+            sys.stdout.flush() # Ensure it's sent immediately
+            
+            print(f"Starting music server on port {actual_port}...")
+            print(f"Open http://localhost:{actual_port}/ in your browser or OBS")
+            print(f"Press Ctrl+C to stop the server")
+            break # Port found, exit loop
+        except socket.error as e:
+            if e.errno == socket.errno.EADDRINUSE:
+                print(f"Port {port_to_try} already in use, trying next...")
+                continue # Try next port
+            else:
+                print(f"Server error on port {port_to_try}: {e}")
+                cleanup()
+                return # Exit if other socket error
+        except Exception as e:
+            print(f"Server setup error on port {port_to_try}: {e}")
+            cleanup()
+            return # Exit on other setup errors
+
+    if httpd is None:
+        print(f"Could not find an available port after {MAX_PORT_ATTEMPTS} attempts.")
+        cleanup()
+        return
+
     try:
-        # Initialize ZMQ context if needed
-        global zmq_context
-        if zmq_context is None:
-            zmq_context = zmq.Context()
-            print("ZMQ context initialized")
-        
-        server_address = ('', PORT)
-        httpd = HTTPServer(server_address, MusicHandler)
-        print(f"Starting music server on port {PORT}...")
-        print(f"Open http://localhost:{PORT}/ in your browser or OBS")
-        print(f"Press Ctrl+C to stop the server")
-        
-        # Test the AppleScript before starting the server
+        # Test the AppleScript before starting the server (only if server started)
         print("\nTesting AppleScript...")
         test_result = get_apple_music_track()
         print(f"Test result: {test_result}")
         print("\nServer ready!")
-        
+        print("\nTesting AppleScript...")
+        test_result = get_apple_music_track()
+        print(f"Test result: {test_result}")
+        print("\nServer ready!")
+
         # Start server
         httpd.serve_forever()
+        
     except KeyboardInterrupt:
         print("\nShutting down server...")
-        httpd.server_close()
+        if httpd:
+            httpd.server_close()
         cleanup()
         print("Server stopped")
     except Exception as e:
-        print(f"Server error: {e}")
+        print(f"Server runtime error: {e}")
+        if httpd:
+            httpd.server_close()
         cleanup()
 
 if __name__ == '__main__':
