@@ -923,20 +923,25 @@
                 const onTransitionEnd = (event) => {
                     // Ensure the event is for the transform property and the correct element
                     if (event.propertyName === 'transform' && event.target === this.textElement) {
-                        // Reset position without animation
-                        this.textElement.style.transition = 'none';
-                        this.textElement.style.transform = 'translateX(0)';
                         
-                        // Force reflow *after* resetting position to ensure it visually updates instantly
-                        void this.textElement.offsetWidth; 
+                        // Use requestAnimationFrame to defer the style reset slightly, potentially smoothing the visual jump
+                        requestAnimationFrame(() => {
+                            // Reset position without animation inside the rAF callback
+                            this.textElement.style.transition = 'none';
+                            this.textElement.style.transform = 'translateX(0)';
+                            
+                            // Force reflow *after* resetting position to ensure it visually updates instantly
+                            void this.textElement.offsetWidth; 
+                        });
 
                         console.log(`[${this.textElement.id}] Scroll transition finished. Scheduling next scroll (${this.scrollInterval}ms)`);
                         this.isScrolling = false;
                         
-                        // Remove the listener after it runs once
-                        this.textElement.removeEventListener('transitionend', onTransitionEnd);
+                        // Remove the listener immediately (it's marked { once: true } anyway, but good practice)
+                        // No need to remove explicitly due to { once: true } option below
+                        // this.textElement.removeEventListener('transitionend', onTransitionEnd); 
                         
-                        // Schedule the next scroll
+                        // Schedule the next scroll immediately after the transition ends
                         this._scheduleNextScroll(this.scrollInterval); 
                     }
                 };
