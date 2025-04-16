@@ -875,7 +875,7 @@
                 
                 // Reset visual state before measurement
                 this.innerElement.classList.remove('scrolling-active'); // Remove class if present
-                this.innerElement.style.animation = 'none'; // Temporarily disable animation for measurement
+                // The line setting style.animation = 'none' was removed as it conflicts with the class-based animation.
                 this.innerElement.style.transform = 'translateX(0)'; // Ensure reset
                 
                 // Set text content on inner span to original for measurement consistency
