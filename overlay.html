@@ -244,8 +244,12 @@
         /* Apply animation via this class */
         .scroll-text.scrolling-active {
             /* Apply animation with initial delay */
-            animation: scrollText 15s linear 2s infinite; /* 15s duration, 2s initial delay, infinite loop */
-            /* Base transform is now set in .scroll-text */
+            animation-name: scrollText;
+            animation-duration: 15s;
+            animation-timing-function: linear;
+            animation-delay: 2s;
+            animation-iteration-count: infinite;
+            animation-fill-mode: backwards; /* Apply 0% keyframe style during delay */
         }
         
         .not-playing {
@@ -915,10 +919,9 @@
                 cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
                 this.isScrolling = false; // Keep for potential future state checks, though not used for animation now
                 
-                // Reset visual state by removing class and styles
+                // Reset visual state by removing class
                 this.textElement.classList.remove('scrolling-active');
-                // Ensure transform is explicitly reset AFTER removing the class
-                this.textElement.style.transform = 'translateX(0)'; 
+                // Let the base .scroll-text CSS rule handle the transform: translateX(0)
                 
                 // Reset text content to the base original text
                 this.textElement.textContent = this.originalText; 
