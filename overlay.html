@@ -855,7 +855,7 @@
                 // Reset visual state before measurement (remove animation class)
                 this.textElement.classList.remove('scrolling-active');
                 this.textElement.style.transform = 'translateX(0)'; // Ensure reset
-                this.textElement.style.animation = 'none'; // Explicitly remove animation for measurement
+                // The line setting style.animation = 'none' was removed as it conflicts with the class-based animation.
                 
                 // Set text content to original for measurement consistency
                 this.textElement.textContent = this.originalText; 
