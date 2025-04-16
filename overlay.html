@@ -954,12 +954,16 @@
             _onAnimationEnd() {
                 console.log(`[${this.innerElement.id}] Animation ended.`);
                 this.isScrolling = false;
-                // Remove class now that animation is done. 
-                // Base style should cause it to revert to translateX(0) smoothly.
+                // Remove class now that animation is done.
                 this.innerElement.classList.remove('scrolling-active');
                 
-                // Force reflow might help ensure visual update after class removal
-                void this.innerElement.offsetWidth; 
+                // Use requestAnimationFrame to defer the explicit transform reset
+                requestAnimationFrame(() => {
+                    // Reset transform just before the next repaint
+                    this.innerElement.style.transform = 'translateX(0)';
+                    // Force reflow might still be useful here as well
+                    void this.innerElement.offsetWidth; 
+                });
 
                 // Schedule the next loop
                 const loopDelay = 15000; // 15 second interval between start of scrolls
