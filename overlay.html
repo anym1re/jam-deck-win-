@@ -216,7 +216,14 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Keyframes removed - animation handled by JS */
+        /* --- CSS Animation for Marquee --- */
+        @keyframes scrollText {
+            /* 15s total duration: 2s initial delay handled by animation-delay */
+            /* Loop: 8s scroll + 7s pause = 15s */
+            0%   { transform: translateX(0); }     /* Start position */
+            53.33% { transform: translateX(-50%); } /* Scroll halfway over 8s (8/15 = 53.33%) */
+            100% { transform: translateX(-50%); } /* Hold end position for 7s (7/15 = 46.67%) */
+        }
         
         .scroll-container {
             width: 100%;
@@ -231,7 +238,13 @@
             /* transition will be added by JS */
         }
         
-        /* .scrolling-active class removed */
+        /* Apply animation via this class */
+        .scroll-text.scrolling-active {
+            /* Apply animation with initial delay */
+            animation: scrollText 15s linear 2s infinite; /* 15s duration, 2s initial delay, infinite loop */
+            /* Ensure transform is reset if class is removed */
+            transform: translateX(0); 
+        }
         
         .not-playing {
             font-style: italic;
@@ -768,10 +781,9 @@
                 setSceneStorage('musicPlayerTheme', theme);
                 
                 // Re-check if scrolling is needed after theme change (container size might change)
-                // Pass false to avoid triggering the initial 2s delay
                 requestAnimationFrame(() => { // Use rAF to ensure styles are applied first
-                    songTitleMarquee._checkNeedsScroll(false);
-                    songArtistMarquee._checkNeedsScroll(false);
+                    songTitleMarquee._checkNeedsScroll(); // No parameter needed now
+                    songArtistMarquee._checkNeedsScroll(); // No parameter needed now
                 });
             });
         });
@@ -798,10 +810,9 @@
                 setSceneStorage('musicPlayerWidth', width);
                 
                 // Re-check if scrolling is needed after width change
-                // Pass false to avoid triggering the initial 2s delay
                  requestAnimationFrame(() => { // Use rAF to ensure styles are applied first
-                    songTitleMarquee._checkNeedsScroll(false);
-                    songArtistMarquee._checkNeedsScroll(false);
+                    songTitleMarquee._checkNeedsScroll(); // No parameter needed now
+                    songArtistMarquee._checkNeedsScroll(); // No parameter needed now
                 });
             });
         });
@@ -814,10 +825,7 @@
                 this.originalText = '';
                 this.isScrolling = false;
                 this.needsScroll = false;
-                this.scrollTimer = null;
-                this.initialDelay = 2000; // 2 seconds
-                this.scrollInterval = 15000; // 15 seconds
-                this.scrollDuration = 8000; // 8 seconds
+                // Timers and duration properties removed - handled by CSS
                 this.animationFrameRequest = null;
             }
 
@@ -840,13 +848,15 @@
                 return { textWidth, containerWidth };
             }
 
-            _checkNeedsScroll(triggerInitialScroll = false) {
+            _checkNeedsScroll() { // Removed triggerInitialScroll parameter
                 // Clear any pending animation frame requests for measurement
                 cancelAnimationFrame(this.animationFrameRequest); 
                 
-                // Reset visual state before measurement
-                this.textElement.style.transform = 'translateX(0)';
-                this.textElement.style.transition = 'none';
+                // Reset visual state before measurement (remove animation class)
+                this.textElement.classList.remove('scrolling-active');
+                this.textElement.style.transform = 'translateX(0)'; // Ensure reset
+                this.textElement.style.animation = 'none'; // Explicitly remove animation for measurement
+                
                 // Set text content to original for measurement consistency
                 this.textElement.textContent = this.originalText; 
 
@@ -856,149 +866,59 @@
                     const { textWidth, containerWidth } = this._measureWidths();
                     this.needsScroll = textWidth > containerWidth;
 
-                    // Now, update text content based on whether scroll is needed
+                    // Now, update text content and apply/remove class based on whether scroll is needed
                     if (this.needsScroll) {
+                        console.log(`[${this.textElement.id}] Needs scroll. Applying CSS animation.`);
                         // Add duplicate text with spacing
                         this.textElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
-                        // If triggered by an update (like new song), schedule the initial scroll
-                        if (triggerInitialScroll) {
-                            console.log(`[${this.textElement.id}] Needs scroll, scheduling initial scroll (${this.initialDelay}ms)`);
-                            this._scheduleNextScroll(this.initialDelay); 
-                        } else {
-                             console.log(`[${this.textElement.id}] Needs scroll, but initial scroll not triggered this time.`);
-                        }
+                        // Add class to enable CSS animation
+                        this.textElement.classList.add('scrolling-active');
                     } else {
+                        console.log(`[${this.textElement.id}] No scroll needed.`);
                         // Ensure original text is displayed if no scroll needed
                         this.textElement.textContent = this.originalText;
-                         console.log(`[${this.textElement.id}] No scroll needed.`);
+                        // Ensure animation class is removed
+                        this.textElement.classList.remove('scrolling-active');
                     }
                 });
             }
 
-            _performScroll() {
-                if (!this.needsScroll || this.isScrolling) return;
-
-                console.log(`[${this.textElement.id}] Performing scroll...`);
-                console.log(`[${this.textElement.id}] Performing scroll...`);
-                this.isScrolling = true;
-                
-                // --- Calculate scroll distance accurately (Original Text + Spaces) ---
-                const { textWidth: originalTextWidth } = this._measureWidths();
-
-                // Measure space width accurately for the current font style
-                const spaceMeasureSpan = document.createElement('span');
-                spaceMeasureSpan.style.visibility = 'hidden';
-                spaceMeasureSpan.style.position = 'absolute';
-                spaceMeasureSpan.style.whiteSpace = 'nowrap'; // Prevent wrapping
-                const computedStyle = window.getComputedStyle(this.textElement);
-                spaceMeasureSpan.style.fontFamily = computedStyle.fontFamily;
-                spaceMeasureSpan.style.fontSize = computedStyle.fontSize;
-                spaceMeasureSpan.style.fontWeight = computedStyle.fontWeight;
-                spaceMeasureSpan.style.fontStyle = computedStyle.fontStyle;
-                spaceMeasureSpan.style.letterSpacing = computedStyle.letterSpacing;
-                spaceMeasureSpan.textContent = '\u00A0'; // Use non-breaking space
-                document.body.appendChild(spaceMeasureSpan);
-                const spaceWidth = spaceMeasureSpan.offsetWidth;
-                document.body.removeChild(spaceMeasureSpan);
-                // console.log(`[${this.textElement.id}] Measured space width: ${spaceWidth}px`); // Optional debug
-
-                // Calculate total scroll distance
-                const scrollDistance = originalTextWidth + (4 * spaceWidth);
-                // console.log(`[${this.textElement.id}] Original width: ${originalTextWidth}px, Scroll distance: ${scrollDistance}px`); // Optional debug
-                // --- End distance calculation ---
-
-                // --- Calculate dynamic duration ---
-                const pixelsPerSecond = 50; // Adjust scroll speed (pixels per second)
-                let calculatedDurationMs = (scrollDistance / pixelsPerSecond) * 1000;
-                
-                // Apply min/max duration (e.g., min 4s, max 20s)
-                const minDurationMs = 4000; 
-                const maxDurationMs = 20000;
-                const actualDurationMs = Math.max(minDurationMs, Math.min(calculatedDurationMs, maxDurationMs));
-                const actualDurationSec = actualDurationMs / 1000;
-                console.log(`[${this.textElement.id}] Calculated duration: ${calculatedDurationMs.toFixed(0)}ms, Actual duration: ${actualDurationMs}ms`);
-                // --- End dynamic duration calculation ---
-
-                // Apply animation using calculated duration
-                this.textElement.style.transition = `transform ${actualDurationSec}s linear`;
-                this.textElement.style.transform = `translateX(-${scrollDistance}px)`;
-
-                // --- Reset using setTimeout slightly before animation ends ---
-                const resetDelay = Math.max(0, actualDurationMs - 50); // Reset 50ms before theoretical end
-                
-                // Schedule the visual reset
-                this.resetTimer = setTimeout(() => {
-                    if (!this.isScrolling) return; // Check if scrolling was stopped prematurely
-                    
-                    // Reset position without animation
-                    this.textElement.style.transition = 'none';
-                    this.textElement.style.transform = 'translateX(0)';
-                    
-                    // Force reflow to ensure reset is applied visually
-                    void this.textElement.offsetWidth; 
-                    
-                    console.log(`[${this.textElement.id}] Scroll visually reset.`);
-                    
-                }, resetDelay);
-
-                // Schedule the state update and next scroll after the full duration
-                this.scrollTimer = setTimeout(() => {
-                    if (!this.isScrolling) return; // Check if scrolling was stopped prematurely
-
-                    this.isScrolling = false;
-                    console.log(`[${this.textElement.id}] Scroll finished. Scheduling next scroll (${this.scrollInterval}ms)`);
-                    this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll after the interval
-                }, actualDurationMs); 
-                // --- End setTimeout reset logic ---
-            }
-
-            _scheduleNextScroll(delay) {
-                clearTimeout(this.scrollTimer); // Clear any existing timer
-                if (!this.needsScroll || this.isScrolling) {
-                     console.log(`[${this.textElement.id}] Scheduling cancelled (needsScroll: ${this.needsScroll}, isScrolling: ${this.isScrolling})`);
-                    return; // Don't schedule if not needed or already scrolling
-                }
-                
-                console.log(`[${this.textElement.id}] Scheduling scroll in ${delay}ms`);
-                this.scrollTimer = setTimeout(() => {
-                    // Check again right before performing, in case state changed
-                    if (this.needsScroll && !this.isScrolling) {
-                        this._performScroll();
-                    } else {
-                         console.log(`[${this.textElement.id}] Scroll execution cancelled just before start (needsScroll: ${this.needsScroll}, isScrolling: ${this.isScrolling})`);
-                    }
-                }, delay);
-            }
+            // _performScroll method removed - animation handled by CSS
+            
+            // _scheduleNextScroll method removed - animation handled by CSS
 
             updateText(newText) {
                 const textChanged = newText !== this.originalText;
+                const textChanged = newText !== this.originalText;
                 
                 // Stop any ongoing scroll/timers before updating
-                this.stop(); 
+                this.stop(); // Ensures animation class is removed and text reset
                 
                 this.originalText = newText || ''; // Handle null/undefined
-                this.textElement.textContent = this.originalText; // Set initial text for measurement
+                this.textElement.textContent = this.originalText; // Set initial text
                 
                 if (this.originalText) {
-                    // Check if scroll is needed. Pass true to trigger initial scroll if needed.
-                    this._checkNeedsScroll(true); 
+                    // Check if scroll is needed and apply/remove class
+                    this._checkNeedsScroll(); 
                 } else {
                     // No text, ensure needsScroll is false and element is empty
                     this.needsScroll = false; 
                     this.textElement.textContent = '';
+                    this.textElement.classList.remove('scrolling-active'); // Ensure class is removed
                 }
             }
 
             stop() {
-                 console.log(`[${this.textElement.id}] Stopping marquee.`);
-                clearTimeout(this.scrollTimer); // Timer for scheduling next scroll
-                clearTimeout(this.resetTimer); // Timer for visual reset
+                 console.log(`[${this.textElement.id}] Stopping marquee (removing class).`);
+                // Timers removed
                 cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
-                this.isScrolling = false;
-                // Don't reset needsScroll here, let _checkNeedsScroll determine it
-                // Reset visual state
-                this.textElement.style.transition = 'none';
-                this.textElement.style.transform = 'translateX(0)';
+                this.isScrolling = false; // Keep for potential future state checks, though not used for animation now
+                
+                // Reset visual state by removing class and styles
+                this.textElement.classList.remove('scrolling-active');
+                this.textElement.style.animation = 'none'; // Stop CSS animation immediately
+                this.textElement.style.transform = 'translateX(0)'; // Reset position
+                
                 // Reset text content to the base original text
                 this.textElement.textContent = this.originalText; 
             }
