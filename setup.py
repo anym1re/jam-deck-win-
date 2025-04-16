@@ -15,7 +15,8 @@ APP = ['app.py']
 DATA_FILES = [
     ('', ['overlay.html', 'music_server.py']),  # Required files
     ('assets/images', ['assets/images/jamdeck.icns', 'assets/images/jamdeck-template.png']),  # Image assets
-    ('assets/fonts', glob.glob('assets/fonts/*.ttf')), # Include all TTF fonts
+    # Use glob to include all .ttf files, including the new JetBrains Mono ones
+    ('assets/fonts', glob.glob('assets/fonts/*.ttf')), 
     ('Frameworks', ['libffi.8.dylib']),  # Include libffi in the Frameworks directory
 ]
 OPTIONS = {
