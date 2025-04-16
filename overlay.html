@@ -237,6 +237,7 @@
             position: relative; /* Needed for CSS transform animation */
             padding: 0; /* Ensure no text padding */
             margin: 0; /* Ensure no text margin */
+            transform: translateX(0); /* Explicitly set base position */
             /* transition will be added by JS */
         }
         
@@ -244,8 +245,7 @@
         .scroll-text.scrolling-active {
             /* Apply animation with initial delay */
             animation: scrollText 15s linear 2s infinite; /* 15s duration, 2s initial delay, infinite loop */
-            /* Ensure transform is reset if class is removed */
-            transform: translateX(0); 
+            /* Base transform is now set in .scroll-text */
         }
         
         .not-playing {
