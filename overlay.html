@@ -218,10 +218,13 @@
         
         /* --- CSS Animation for Marquee --- */
         @keyframes scrollText {
-            /* 15s total cycle: 8s scroll + 7s pause */
-            0%      { transform: translateX(0); }     /* Start position */
-            53.33%  { transform: translateX(-50%); } /* Scroll halfway over 8s (8/15 = 53.33%) */
-            100%    { transform: translateX(-50%); } /* Hold end position for 7s */
+            /* Full cycle with long pauses at start and end for a total of 23s */
+            0%      { transform: translateX(0); }                          /* Start position */
+            10%     { transform: translateX(0); }                          /* Stay at start */
+            20%     { transform: translateX(var(--scroll-distance, -100%)); } /* Scroll to end */
+            27%     { transform: translateX(var(--scroll-distance, -100%)); } /* Hold at end briefly */
+            37%     { transform: translateX(0); }                          /* Return to start */
+            100%    { transform: translateX(0); }                          /* Long pause at start (63% of animation) */
         }
         
         .scroll-container {
@@ -244,16 +247,17 @@
             transform: translateX(0); /* Explicitly set base position */
             padding: 0;
             margin: 0;
+            white-space: nowrap; /* Prevent wrapping */
         }
         
         /* Apply animation via this class to the inner span - CSS controls timing/loops */
         .scroll-text .inner-scroll.scrolling-active {
             animation-name: scrollText;
-            animation-duration: 15s; /* Total cycle time including pause */
-            animation-timing-function: linear;
-            animation-delay: 2s; /* Initial 2s delay */
+            animation-duration: var(--scroll-duration, 23s); /* Custom duration based on text length */
+            animation-timing-function: ease-in-out;
+            animation-delay: 2s; /* Initial delay before first scroll */
             animation-iteration-count: infinite; /* Loop forever */
-            /* animation-fill-mode: backwards; */ /* Optional: Apply start state during delay */
+            animation-fill-mode: forwards; /* Stay at final position (0%) */
         }
         
         .not-playing {
@@ -844,25 +848,33 @@
             }
 
             _measureWidths() {
-                // Measure container width directly
+                // Get the container width
                 const containerWidth = this.container.clientWidth;
                 
-                // Use a clone of the *outer* element with original text set on the *inner* element
-                // This measures how much space the original text would take within the layout structure
-                const outerClone = this.outerElement.cloneNode(true); // Clone the outer .scroll-text
-                const innerClone = outerClone.querySelector('.inner-scroll'); // Find inner span in clone
+                // Create a temporary span for accurate text measurement
+                const tempSpan = document.createElement('span');
                 
-                outerClone.style.display = "inline-block"; // Ensure correct display for measurement
-                outerClone.style.width = "auto";          // Let width be determined by content
-                outerClone.style.position = "absolute";
-                outerClone.style.visibility = "hidden";
-                innerClone.textContent = this.originalText; // Set original text on the inner span clone
+                // Copy all styles that could affect text rendering
+                const computedStyle = window.getComputedStyle(this.innerElement);
+                tempSpan.style.fontFamily = computedStyle.fontFamily;
+                tempSpan.style.fontSize = computedStyle.fontSize;
+                tempSpan.style.fontWeight = computedStyle.fontWeight;
+                tempSpan.style.letterSpacing = computedStyle.letterSpacing;
+                tempSpan.style.textTransform = computedStyle.textTransform;
+                tempSpan.style.whiteSpace = 'nowrap';
+                tempSpan.style.display = 'inline-block';
+                tempSpan.style.position = 'absolute';
+                tempSpan.style.visibility = 'hidden';
+                tempSpan.textContent = this.originalText;
                 
-                document.body.appendChild(outerClone);
-                const textWidth = outerClone.offsetWidth; // Measure the width of the outer clone
-                document.body.removeChild(outerClone);
-
-                // Return measured widths without modifying the live element here
+                // Add to document, measure, and remove
+                document.body.appendChild(tempSpan);
+                const textWidth = tempSpan.getBoundingClientRect().width;
+                document.body.removeChild(tempSpan);
+                
+                // Log precise measurements
+                console.log(`[${this.innerElement.id}] PRECISE - Text: "${this.originalText}", Width: ${textWidth}px, Container: ${containerWidth}px`);
+                
                 return { textWidth, containerWidth };
             }
 
@@ -887,9 +899,45 @@
                     // Now, update inner span's text content and apply/remove class based on whether scroll is needed
                     if (this.needsScroll) {
                         console.log(`[${this.innerElement.id}] Needs scroll. Applying CSS animation.`);
-                        // Add duplicate text with spacing to the inner span
-                        this.innerElement.textContent = this.originalText + '\u00A0\u00A0\u00A0\u00A0' + this.originalText;
-                        // Add class to enable CSS animation (CSS handles delay and looping)
+                        
+                        // Calculate the EXACT distance needed to show the full text
+                        // If text is 400px and container is 200px, we need to scroll -200px
+                        // Add 5px buffer to ensure the last character is fully visible
+                        const scrollDistance = -(textWidth - containerWidth + 5);
+                        
+                        // Adjust animation duration based on text length
+                        // Longer text should scroll more slowly
+                        const baseDuration = 23; // Base duration in seconds
+                        let adjustedDuration = baseDuration;
+                        
+                        // Calculate a reasonable duration based on text length
+                        // Short texts should scroll at a moderate speed, longer ones slightly slower
+                        if (textWidth > containerWidth) {
+                            // Base speed: about 100px per second
+                            // For a 300px scroll, that's 3 seconds of scroll time
+                            const scrollAmount = textWidth - containerWidth;
+                            const scrollSpeed = 100; // pixels per second
+                            const scrollTime = scrollAmount / scrollSpeed;
+                            
+                            // Total = 2s initial delay + scroll time + 1.5s pause + scroll time back + remaining time
+                            // We want to keep the total cycle at baseDuration (23s)
+                            const scrollComponent = scrollTime * 2 + 1.5; // scroll there + pause + scroll back
+                            
+                            // Adjust only if the scrolling would take longer than 40% of the full duration
+                            if (scrollComponent > baseDuration * 0.4) {
+                                // Cap at 35s max duration
+                                adjustedDuration = Math.min(35, baseDuration * 1.5);
+                                console.log(`[${this.innerElement.id}] Long text, adjusted duration: ${adjustedDuration}s`);
+                            }
+                        }
+                        
+                        // Set custom property for animation duration
+                        this.innerElement.style.setProperty('--scroll-duration', `${adjustedDuration}s`);
+                        
+                        // Set the custom property for scroll distance
+                        this.innerElement.style.setProperty('--scroll-distance', `${scrollDistance}px`);
+                        
+                        // Add animation class
                         this.innerElement.classList.add('scrolling-active');
                     } else {
                         console.log(`[${this.innerElement.id}] No scroll needed.`);
@@ -933,10 +981,13 @@
                 cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
                 this.isScrolling = false; 
                 
-                // Reset visual state by removing class
+                // Reset visual state by removing animation class
                 this.innerElement.classList.remove('scrolling-active');
                 // Ensure transform is reset (base style should handle this)
                 this.innerElement.style.transform = 'translateX(0)'; 
+                // Remove custom properties
+                this.innerElement.style.removeProperty('--scroll-distance');
+                this.innerElement.style.removeProperty('--scroll-duration');
                 
                 // Reset text content on inner span to the base original text
                 this.innerElement.textContent = this.originalText; 
