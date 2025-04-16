@@ -919,23 +919,36 @@
                 // --- End dynamic duration calculation ---
 
                 // Apply animation using calculated duration
+                // Define the event listener function for transition end
+                const onTransitionEnd = (event) => {
+                    // Ensure the event is for the transform property and the correct element
+                    if (event.propertyName === 'transform' && event.target === this.textElement) {
+                        // Reset position without animation
+                        this.textElement.style.transition = 'none';
+                        this.textElement.style.transform = 'translateX(0)';
+                        
+                        // Force reflow *after* resetting position to ensure it visually updates instantly
+                        void this.textElement.offsetWidth; 
+
+                        console.log(`[${this.textElement.id}] Scroll transition finished. Scheduling next scroll (${this.scrollInterval}ms)`);
+                        this.isScrolling = false;
+                        
+                        // Remove the listener after it runs once
+                        this.textElement.removeEventListener('transitionend', onTransitionEnd);
+                        
+                        // Schedule the next scroll
+                        this._scheduleNextScroll(this.scrollInterval); 
+                    }
+                };
+
+                // Add the one-time event listener *before* starting the transition
+                this.textElement.addEventListener('transitionend', onTransitionEnd, { once: true });
+
+                // Apply animation using calculated duration - this triggers the transition
                 this.textElement.style.transition = `transform ${actualDurationSec}s linear`;
                 this.textElement.style.transform = `translateX(-${scrollDistance}px)`;
 
-                // Reset after scroll completes (using the actual calculated duration)
-                this.scrollTimer = setTimeout(() => {
-                    // Reset position without animation
-                    this.textElement.style.transition = 'none';
-                    this.textElement.style.transform = 'translateX(0)';
-                    
-                    // Force reflow *after* resetting position to ensure it visually updates instantly
-                    void this.textElement.offsetWidth; 
-
-                    console.log(`[${this.textElement.id}] Scroll finished. Scheduling next scroll (${this.scrollInterval}ms)`);
-                    this.isScrolling = false;
-                    // No need to re-apply transition here, it's applied at the start of _performScroll
-                    this._scheduleNextScroll(this.scrollInterval); // Schedule next scroll after the interval
-                }, actualDurationMs); // Use the calculated duration for the timeout
+                // --- setTimeout removed - reset is now handled by transitionend event ---
             }
 
             _scheduleNextScroll(delay) {
