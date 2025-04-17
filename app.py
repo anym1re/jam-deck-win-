@@ -340,7 +340,13 @@ class JamDeckApp(rumps.App):
                     if port_num != self.preferred_port:
                         self.preferred_port = port_num
                         self.save_config()
-                        rumps.notification("Port Updated", f"Preferred port set to {self.preferred_port}.\nRestart the server for the change to take effect.", sound=False)
+                        # Correctly call notification with title, subtitle, and message
+                        rumps.notification(
+                            title="Port Updated", 
+                            subtitle=f"Preferred port set to {self.preferred_port}", 
+                            message="Restart the server for the change to take effect.", 
+                            sound=False
+                        )
                         # Update display if server isn't running
                         if not self.server_running:
                              self.actual_port = self.preferred_port # Update actual_port display placeholder
