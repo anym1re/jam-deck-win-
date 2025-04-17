@@ -128,22 +128,33 @@ def get_apple_music_track():
                 
                 # Add artwork path if available
                 if has_artwork:
+                    # Generate timestamp for cache busting
+                    try:
+                        timestamp = int(os.path.getmtime("/tmp/harmony_deck_cover.jpg"))
+                        data["artworkPath"] = f"/artwork?t={timestamp}"
+                    except FileNotFoundError:
+                        # Handle case where artwork file might not exist when getting timestamp
+                        print("Warning: Artwork file not found for timestamp, skipping artwork path.")
+                        # Continue without artwork path, data dictionary is already populated
+                    
+                # Convert dictionary to JSON using Python's json module for correct escaping
+                return json.dumps(data)
+            else:
+                print(f"Error: Unexpected number of parts from AppleScript when playing. Parts: {parts}")
+                return json.dumps({"playing": False, "error": "Malformed response from AppleScript (playing)"})
+        else:
+            # Not playing or error reading track
+            error_message = parts[1] if len(parts) > 1 else "Unknown state"
+            print(f"Music app not playing or error: {error_message}")
+            # Return None for error if it's just "Not playing"
+            error_payload = error_message if "Error reading track" in error_message else None
+            return json.dumps({"playing": False, "error": error_payload})
+            
     except subprocess.TimeoutExpired:
         print("Error: AppleScript timed out after 5 seconds")
         return json.dumps({"playing": False, "error": "AppleScript timed out"})
-    except FileNotFoundError:
-        # Handle case where artwork file might not exist when getting timestamp
-        print("Error: Artwork file not found for timestamp.")
-        # Return data without artwork path
-        data = {
-            "playing": True,
-            "title": title,
-            "artist": artist,
-            "album": album
-        }
-        return json.dumps(data)
     except Exception as e:
-        print(f"Error processing AppleScript output: {e}")
+        print(f"Error processing AppleScript output or getting artwork timestamp: {e}")
         # Attempt to return a generic error if parsing failed badly
         return json.dumps({"playing": False, "error": f"Python processing error: {str(e)}"})
 
