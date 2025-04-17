@@ -480,9 +480,21 @@
                             songTitleMarquee.clear(); // Clear text and stop animation
                             songArtistMarquee.clear(); // Clear text and stop animation
 
-                            // Show error message if there's an error message
-                            if (data.error) {
-                                // Display error message in title area, stop its marquee
+                            // Check the specific error message
+                            if (data.error === "Music app not running") {
+                                // If Music app isn't running, hide the container completely
+                                if (containerVisible) {
+                                    container.classList.add('hidden');
+                                    containerVisible = false;
+                                    if (debugMode) console.log("[Main] Music app not running, hiding container.");
+                                }
+                                // Ensure text is cleared (already done by .clear() above)
+                            } else if (data.error) {
+                                // For other errors, show "Music information unavailable"
+                                if (!containerVisible) { // Ensure container is visible for error message
+                                    container.classList.remove('hidden');
+                                    containerVisible = true;
+                                }
                                 songTitleMarquee.updateText("Music information unavailable"); 
                                 document.getElementById('songTitle').classList.add('not-playing');
                                 // Artist marquee already cleared by .clear() above
@@ -491,10 +503,11 @@
                                     showDebugError(`Server reports issue: ${data.error}`);
                                 }
                             } else {
-                                // Hide container when not playing (marquees already stopped/cleared)
+                                // If simply not playing (no error), hide the container
                                 if (containerVisible) {
                                     container.classList.add('hidden');
                                     containerVisible = false;
+                                    if (debugMode) console.log("[Main] Music not playing (no error), hiding container.");
                                 }
                             }
                         }
