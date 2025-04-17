@@ -32,8 +32,8 @@ OPTIONS = {
         'CFBundleName': 'Jam Deck',
         'CFBundleDisplayName': 'Jam Deck for OBS',
         'CFBundleIdentifier': 'com.jamdeck.app',
-        'CFBundleVersion': '1.1.3',
-        'CFBundleShortVersionString': '1.1.2',
+        'CFBundleVersion': '1.1.4', # CFBundleVersion: Internal build number
+        'CFBundleShortVersionString': '1.1.4', # CFBundleShortVersionString: User-facing version number
         'NSAppleEventsUsageDescription': 'This app requires access to Apple Music to display current track information.',
         'NSHumanReadableCopyright': '© 2025 Henry Manes',
         'LSUIElement': True,  # Makes the app a background agent with no dock icon

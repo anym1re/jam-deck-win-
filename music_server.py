@@ -12,7 +12,7 @@ import socket
 import argparse # Import argparse
 
 # Version information
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 
 # Set starting port for the server
 START_PORT = 8080
