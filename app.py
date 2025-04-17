@@ -362,12 +362,12 @@ class JamDeckApp(rumps.App):
                             )
                             self.stop_server()
                             # Short delay before restarting might be needed
-                            time.sleep(0.5) 
+                            time.sleep(0.5)
                             self.start_server()
-                        else:
-                            print("Port changed while server stopped.")
-                            # Update display placeholder and notify
-                            self.actual_port = self.preferred_port 
+                    else: # Corrected indentation
+                        print("Port changed while server stopped.")
+                        # Update display placeholder and notify
+                        self.actual_port = self.preferred_port
                             self.update_menu_state()
                             rumps.notification(
                                 title="Port Updated",
