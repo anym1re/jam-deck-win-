@@ -368,10 +368,10 @@ class JamDeckApp(rumps.App):
                         print("Port changed while server stopped.")
                         # Update display placeholder and notify
                         self.actual_port = self.preferred_port
-                            self.update_menu_state()
-                            rumps.notification(
-                                title="Port Updated",
-                                subtitle=f"Preferred port set to {self.preferred_port}",
+                        self.update_menu_state() # Corrected indentation
+                        rumps.notification(
+                            title="Port Updated",
+                            subtitle=f"Preferred port set to {self.preferred_port}",
                                 message="Server will use this port on next start.",
                                 sound=False
                             )
