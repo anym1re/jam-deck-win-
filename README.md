@@ -16,11 +16,10 @@ A customizable Apple Music now playing display for macOS.
 
 ## Features
 
-- Shows currently playing Apple Music track on your stream.
-- Ten beautiful themes (5 rounded: Natural, Twitch, Dark, Pink, Light and 5 square: Transparent, Neon, Terminal, Retro, High Contrast).
+- Shows currently playing Apple Music track on your stream with artwork.
+- Ten versatile themes (5 rounded: Natural, Twitch, Dark, Pink, Light and 5 square: Transparent, Neon, Terminal, Retro, High Contrast).
 - Adaptive or Fixed width display options.
 - Automatically hides when no music is playing.
-- Support for album artwork.
 - Clean animated transitions between songs.
 - Theme menu appears only on hover (invisible to viewers).
 - Scene-specific settings saved between sessions.
@@ -44,6 +43,8 @@ A customizable Apple Music now playing display for macOS.
    - If you see a warning about an app from an unidentified developer, see [Apple's guide](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
 4. The app will appear in your menu bar with a musical note icon.
 5. The server starts automatically when you launch the app.
+
+To continue, jump to [Menu Bar App](#menu-bar-app).
 
 ### Option 2: Manual Installation (Advanced)
 
@@ -98,7 +99,7 @@ To add Jam Deck to your OBS scene:
 4. Choose `Create New` and give it a name (e.g., "Now Playing Music").
 5. Click `OK`.
 6. In the Browser Source properties:
-   - URL: Use the app to copy a scene-specific URL, or use `http://localhost:8080/`
+   - URL: Use the app to copy a scene-specific URL. The default URL is `http://localhost:8080/`
    - Width: 400 (recommended minimum)
    - Height: 140
    - Check "Refresh browser when scene becomes active."
@@ -116,18 +117,13 @@ Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 - **Light**: Clean white theme with blue accents.
 
 #### Square Themes
-- **Transparent**: Minimalist theme with no background, just text and controls.
+- **Transparent**: Minimalist theme with no background, just text and artwork.
 - **Neon**: Cyberpunk-inspired theme with glowing cyan text on black background.
 - **Terminal**: Green-on-black theme reminiscent of classic computer terminals.
 - **Retro**: Blue and yellow theme using pixel-style Press Start 2P font.
 - **High Contrast**: Black and white theme with Atkinson Hyperlegible font optimized for maximum readability.
 
 **Note about Settings Storage**: Theme and width preferences are stored separately in each browser's local storage. This means settings selected in your regular browser (Chrome, Safari, etc.) won't automatically appear in OBS. You'll need to configure your preferred settings once in each environment where you use Jam Deck.
-
-**Font Attribution**: 
-- The Retro theme uses Press Start 2P font by CodeMan38 (licensed under SIL Open Font License), with Retro Gaming font by Daymarius as fallback.
-- The High Contrast theme uses Atkinson Hyperlegible font designed by the Braille Institute for improved readability.
-- JetBrains Mono font is used for enhanced readability in certain UI elements.
 
 ### Width Options
 
@@ -177,7 +173,7 @@ If you're using the manual installation:
 
 ## Customization
 
-Advanced users can modify the CSS in `overlay.html` to create custom themes or change the layout.
+Advanced users can modify the CSS in `overlay.css` to create custom themes or change the layout.
 
 ### Changing the Port
 
@@ -237,6 +233,14 @@ Ensure that your build script has execute permissions. You can set this by runni
 ### Environment Considerations
 
 Make sure that the necessary tools (osascript, rm, python, create-dmg) are installed and accessible in your system's PATH. The create-dmg tool is only needed if you want to create DMG installers.
+
+## Font Attribution
+
+- The Retro theme uses Press Start 2P font by CodeMan38 (licensed under SIL Open Font License), with Retro Gaming font by Daymarius as fallback.
+- The High Contrast theme uses Atkinson Hyperlegible font designed by the Braille Institute for improved readability.
+- JetBrains Mono font is used as a monospaced font for the Terminal theme.
+
+All fonts are licensed under the [SIL Open Font License](assets/fonts/LICENSES.md).
 
 ## License
 
