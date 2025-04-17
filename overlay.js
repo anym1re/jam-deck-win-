@@ -229,7 +229,9 @@
                 this.animationFrameRequest = requestAnimationFrame(() => {
                     // Perform measurement using the clean original text state
                     const { textWidth, containerWidth } = this._measureWidths();
-                    this.needsScroll = textWidth > containerWidth;
+                    // Add a tolerance (e.g., 1 pixel) to prevent scrolling for tiny overflows
+                    const scrollTolerance = 1; 
+                    this.needsScroll = textWidth > (containerWidth + scrollTolerance);
 
                     // Now, update inner span's text content and apply/remove class based on whether scroll is needed
                     if (this.needsScroll) {
