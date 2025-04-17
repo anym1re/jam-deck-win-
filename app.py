@@ -337,11 +337,18 @@ class JamDeckApp(rumps.App):
 
         if response.clicked and response.text:
             was_running = self.server_running # Check server state BEFORE changing port
+            port_text = response.text.strip() # Get the entered text
             try:
-                port_num = int(response.text)
-                if 1024 <= port_num <= 65535:
-                    if port_num != self.preferred_port:
-                        self.preferred_port = port_num
+                # Attempt conversion first
+                port_num = int(port_text) 
+                
+                # Then check the range
+                if not (1024 <= port_num <= 65535):
+                    raise ValueError("Port must be between 1024 and 65535.") # Raise specific error for range
+
+                # If conversion and range check pass, proceed
+                if port_num != self.preferred_port:
+                    self.preferred_port = port_num
                         self.save_config() # Save the new port
 
                         # Decide on action based on whether server was running
@@ -369,10 +376,16 @@ class JamDeckApp(rumps.App):
                                 sound=False
                             )
                     # No need for an 'else' alert if port is unchanged
-                else:
-                    raise ValueError("Port must be between 1024 and 65535.")
+                    
             except ValueError as e:
-                rumps.alert("Invalid Port", f"Error: {e}")
+                # Check if the error is due to invalid integer conversion or the range check
+                if "invalid literal for int()" in str(e):
+                    rumps.alert("Invalid Input", "Please enter numbers only for the port.")
+                else:
+                    # Handles the ValueError raised for the range check
+                    rumps.alert("Invalid Port Range", str(e)) 
+            except Exception as e: # Catch any other unexpected errors
+                 rumps.alert("Error", f"An unexpected error occurred: {e}")
 
     # --- Configuration Loading/Saving ---
     CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".jamdeck_config.json")
