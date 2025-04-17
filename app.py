@@ -9,10 +9,7 @@ import json
 
 # Import version from music_server.py
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-try:
-    from music_server import VERSION
-except ImportError:
-    VERSION = "1.1.1"  # Fallback version
+from music_server import VERSION
 
 class JamDeckApp(rumps.App):
     def __init__(self):
