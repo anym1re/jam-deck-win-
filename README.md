@@ -26,6 +26,8 @@ A customizable Apple Music now playing display for macOS.
 - Scene-specific settings saved between sessions.
 - Menu bar app for easy access to server controls and scene management.
 - One-click scene URL copying for easy OBS setup.
+- Scrolling text marquee effect for long song/artist names.
+- Automatic port selection if default port (8080) is in use.
 
 ## Requirements
 
@@ -125,6 +127,7 @@ Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
 **Font Attribution**: 
 - The Retro theme uses Press Start 2P font by CodeMan38 (licensed under SIL Open Font License), with Retro Gaming font by Daymarius as fallback.
 - The High Contrast theme uses Atkinson Hyperlegible font designed by the Braille Institute for improved readability.
+- JetBrains Mono font is used for enhanced readability in certain UI elements.
 
 ### Width Options
 
@@ -178,7 +181,9 @@ Advanced users can modify the CSS in `overlay.html` to create custom themes or c
 
 ### Changing the Port
 
-By default, the server runs on port 8080. To change this (Manual installation only):
+The server automatically starts on port 8080. If this port is already in use, it will automatically find and use the next available port. The selected port will be displayed in the menu bar app and system notifications.
+
+If you need to manually specify a different port (Manual installation only):
 
 1. Open `music_server.py` in a text editor.
 2. Find the line near the top that says `PORT = 8080`

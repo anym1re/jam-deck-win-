@@ -205,8 +205,10 @@
                 const textWidth = tempSpan.getBoundingClientRect().width;
                 document.body.removeChild(tempSpan);
                 
-                // Log precise measurements
-                console.log(`[${this.innerElement.id}] PRECISE - Text: "${this.originalText}", Width: ${textWidth}px, Container: ${containerWidth}px`);
+                // Only log measurements in debug mode
+                if (debugMode) {
+                    console.log(`[${this.innerElement.id}] Text: "${this.originalText}", Width: ${textWidth}px, Container: ${containerWidth}px`);
+                }
                 
                 return { textWidth, containerWidth };
             }
@@ -231,7 +233,7 @@
 
                     // Now, update inner span's text content and apply/remove class based on whether scroll is needed
                     if (this.needsScroll) {
-                        console.log(`[${this.innerElement.id}] Needs scroll. Applying CSS animation.`);
+                        if (debugMode) console.log(`[${this.innerElement.id}] Needs scroll. Applying CSS animation.`);
                         
                         // Calculate the EXACT distance needed to show the full text
                         // If text is 400px and container is 200px, we need to scroll -200px
@@ -263,9 +265,9 @@
                             // Cap the duration to prevent excessively long loops for huge text
                             calculatedDuration = Math.min(maxDuration, calculatedDuration);
 
-                            console.log(`[${this.innerElement.id}] Scroll Amount: ${scrollAmount.toFixed(1)}px, OneWayTime: ${oneWayScrollTime.toFixed(1)}s, Calculated Duration: ${calculatedDuration.toFixed(1)}s`);
+                            if (debugMode) console.log(`[${this.innerElement.id}] Scroll Amount: ${scrollAmount.toFixed(1)}px, OneWayTime: ${oneWayScrollTime.toFixed(1)}s, Calculated Duration: ${calculatedDuration.toFixed(1)}s`);
                         } else {
-                             console.log(`[${this.innerElement.id}] No scroll needed, using default duration.`);
+                             if (debugMode) console.log(`[${this.innerElement.id}] No scroll needed, using default duration.`);
                         }
 
                         // Set custom property for animation duration with error checking
@@ -302,7 +304,7 @@
                         // Add animation class
                         this.innerElement.classList.add('scrolling-active');
                     } else {
-                        console.log(`[${this.innerElement.id}] No scroll needed.`);
+                        if (debugMode) console.log(`[${this.innerElement.id}] No scroll needed.`);
                         // Ensure original text is displayed on inner span if no scroll needed
                         this.innerElement.textContent = this.originalText;
                         // Ensure animation class is removed
@@ -332,7 +334,7 @@
             }
 
             stop() {
-                 console.log(`[${this.innerElement.id}] Stopping marquee (removing class).`);
+                if (debugMode) console.log(`[${this.innerElement.id}] Stopping marquee.`);
                 // Cancel pending measurement checks
                 cancelAnimationFrame(this.animationFrameRequest);
                 
@@ -349,7 +351,7 @@
             }
             
             clear() {
-                 console.log(`[${this.innerElement.id}] Clearing marquee.`);
+                if (debugMode) console.log(`[${this.innerElement.id}] Clearing marquee.`);
                 this.stop();
                 this.originalText = '';
                 this.innerElement.textContent = ''; // Clear text on inner span
@@ -440,13 +442,13 @@
                             
                             // Update text using Marquee Controllers ONLY if text changed
                             if (!previousState || titleText !== previousState.title) {
-                                console.log(`[Main] Title changed: "${previousState?.title}" -> "${titleText}". Updating marquee.`);
+                                if (debugMode) console.log(`[Main] Title changed: "${previousState?.title}" -> "${titleText}"`);
                                 songTitleMarquee.updateText(titleText);
                             }
                             
                             const prevArtistAlbumText = (previousState?.artist || '') + (previousState?.album ? ` • ${previousState.album}` : '');
                             if (!previousState || artistAlbumText !== prevArtistAlbumText) {
-                                console.log(`[Main] Artist/Album changed: "${prevArtistAlbumText}" -> "${artistAlbumText}". Updating marquee.`);
+                                if (debugMode) console.log(`[Main] Artist/Album changed: "${prevArtistAlbumText}" -> "${artistAlbumText}"`);
                                 songArtistMarquee.updateText(artistAlbumText);
                             }
                             
