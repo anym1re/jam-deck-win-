@@ -29,22 +29,84 @@ class JamDeckApp(rumps.App):
         
         # Load saved scenes
         self.scenes = self.load_scenes()
-        
-        # Configure all menu items at once
+
+        # --- Menu Setup ---
+        # Create static items
         server_item = rumps.MenuItem("Start Server", callback=self.toggle_server)
-        copy_scenes_menu = self.create_copy_scenes_menu()
-        
         self.server_url_display = rumps.MenuItem(f"Server URL: http://localhost:{self.actual_port}", callback=None)
         self.server_url_display.set_callback(None) # Make it non-clickable initially
-        
+        open_browser_item = rumps.MenuItem("Open in Browser", callback=self.open_browser)
+        docs_item = rumps.MenuItem("Documentation", callback=self.open_documentation)
+        about_item = rumps.MenuItem("About", callback=self.show_about)
+
+        # Create dynamic menu placeholders
+        self.copy_scenes_menu = rumps.MenuItem("Copy Scene URL")
+        self.manage_scenes_menu = rumps.MenuItem("Manage Scenes")
+
+        # Populate dynamic menus
+        self._populate_copy_menu(self.copy_scenes_menu)
+        self._populate_manage_menu(self.manage_scenes_menu)
+
+        # Assign the full menu structure
         self.menu = [
             server_item,
-            self.server_url_display, # Add display item
+            self.server_url_display,
             None,  # Separator
-            copy_scenes_menu,
+            self.copy_scenes_menu, # Add Copy menu
+            self.manage_scenes_menu, # Add Manage menu
             None,  # Separator
-            rumps.MenuItem("Open in Browser", callback=self.open_browser),
+            open_browser_item,
             None,  # Separator
+            docs_item,
+            about_item
+        ]
+
+        # Update menu text based on current state
+        self.update_menu_state()
+
+    # --- Helper methods for populating dynamic menus ---
+    def _populate_copy_menu(self, menu_item):
+        """Populate the 'Copy Scene URL' menu."""
+        menu_item.clear() # Clear existing items
+        if not self.scenes:
+            menu_item.add(rumps.MenuItem("No scenes defined", callback=None))
+        else:
+            for scene in self.scenes:
+                item = rumps.MenuItem(scene, callback=self.copy_scene_url)
+                menu_item.add(item)
+
+    def _populate_manage_menu(self, menu_item):
+        """Populate the 'Manage Scenes' menu."""
+        menu_item.clear() # Clear existing items
+        menu_item.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
+        menu_item.add(None) # Separator
+        
+        scene_management_items = self._build_manage_scenes_structure()
+        if not scene_management_items:
+             menu_item.add(rumps.MenuItem("No scenes to manage", callback=None))
+        else:
+            for item in scene_management_items:
+                menu_item.add(item)
+    # --- End Helper methods ---
+
+    def update_menu_state(self):
+        """Update the menu items and URL display based on server state"""
+        server_item = self.menu["Start Server"]
+        open_browser_item = self.menu["Open in Browser"]
+
+        if self.server_running:
+            server_item.title = "Stop Server"
+            self.server_url_display.title = f"Server URL: http://localhost:{self.actual_port}"
+            self.server_url_display.set_callback(None) # Keep it non-clickable
+            open_browser_item.set_callback(self.open_browser) # Enable Open Browser
+        else:
+            server_item.title = "Start Server"
+            self.server_url_display.title = "Server Stopped"
+            self.server_url_display.set_callback(None) # Keep it non-clickable
+            open_browser_item.set_callback(self.server_not_running) # Disable Open Browser
+
+    def toggle_server(self, sender):
+        """Toggle server on/off"""
             rumps.MenuItem("Documentation", callback=self.open_documentation),
             rumps.MenuItem("About", callback=self.show_about)
         ]
@@ -279,40 +341,14 @@ class JamDeckApp(rumps.App):
                     f.write(f"{scene}\n")
         except Exception as e:
             rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}", sound=False)
-            
 
-    def create_copy_scenes_menu(self):
-        """Create the copy scenes submenu"""
-        # Create copy scenes submenu
-        copy_scenes_menu = rumps.MenuItem("Copy Scene URL")
-        
-        # Add each scene as a menu item
-        for scene in self.scenes:
-            item = rumps.MenuItem(scene, callback=self.copy_scene_url)
-            copy_scenes_menu.add(item)
-        
-        # Add separator and management options
-        copy_scenes_menu.add(None)  # Separator
-        copy_scenes_menu.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
-        
-        # Create and add the manage scenes submenu
-        manage_scenes_menu = self.build_manage_scenes_menu()
-        copy_scenes_menu.add(manage_scenes_menu)
-        
-        return copy_scenes_menu
-        
-    def rebuild_copy_scenes_menu(self):
-        """Rebuild the copy scenes menu after changes"""
-        if "Copy Scene URL" in self.menu:
-            # Create new copy scenes menu with updated nested menus
-            new_copy_scenes_menu = self.create_copy_scenes_menu()
-            
-            # Replace existing menu
-            index = self.menu._menu.indexOfItemWithTitle_("Copy Scene URL")
-            if index != -1:
-                self.menu._menu.removeItemAtIndex_(index)
-                self.menu._menu.insertItem_atIndex_(new_copy_scenes_menu._menuitem, index)
-    
+    # Method removed: create_copy_scenes_menu (functionality moved to _populate_copy_menu and _populate_manage_menu)
+
+    def _rebuild_dynamic_menus(self):
+        """Rebuild the dynamic menus after scene changes."""
+        self._populate_copy_menu(self.copy_scenes_menu)
+        self._populate_manage_menu(self.manage_scenes_menu)
+
     def copy_scene_url(self, sender):
         """Copy the URL for the selected scene to clipboard using the actual port"""
         if not self.server_running:
@@ -367,24 +403,25 @@ class JamDeckApp(rumps.App):
             # Add the new scene
             self.scenes.append(scene_name)
             self.save_scenes()
-            
-            # Rebuild copy scenes menu
-            self.rebuild_copy_scenes_menu()
+
+            # Rebuild dynamic menus
+            self._rebuild_dynamic_menus()
 
     def manage_scenes(self, _):
-        """Show the Manage Scenes menu (this is a menu item callback but not used directly)"""
+        """Placeholder callback for the 'Manage Scenes' menu item itself."""
         # This function is just a placeholder for menu item callback
-        # The actual menu is built in build_manage_scenes_menu and attached in create_copy_scenes_menu
+        # The actual menu structure is built in _build_manage_scenes_structure and added in _populate_manage_menu
         pass
-        
-    def build_manage_scenes_menu(self):
-        """Generate the dynamic submenu for scene management"""
-        manage_scenes_menu = rumps.MenuItem("Manage Scenes")
-        
+
+    def _build_manage_scenes_structure(self):
+        """Generate the list of menu items for scene management."""
+        scene_items = []
+
         # Add each scene as a menu item with its own submenu
         for scene in self.scenes:
-            scene_item = rumps.MenuItem(f"Scene: {scene}")
-            
+            # Use the scene name directly for the item title in this context
+            scene_item = rumps.MenuItem(scene)
+
             # Only add operation submenus for non-default scenes
             if scene != "default":
                 # Create callbacks with scene name embedded in the callback
@@ -398,11 +435,10 @@ class JamDeckApp(rumps.App):
             else:
                 # Make default scene item appear disabled
                 scene_item.set_callback(None)
-            
-            manage_scenes_menu.add(scene_item)
-        
-        return manage_scenes_menu
-        
+            scene_items.append(scene_item)
+
+        return scene_items
+
     def rename_scene_with_name(self, sender, scene_name):
         """Rename a scene using the passed scene name"""
         print(f"Renaming scene: {scene_name}")
@@ -423,10 +459,10 @@ class JamDeckApp(rumps.App):
                 index = self.scenes.index(scene_name)
                 self.scenes[index] = sanitized_name
                 self.save_scenes()
-                
-                # Rebuild menus
-                self.rebuild_copy_scenes_menu()
-    
+
+                # Rebuild dynamic menus
+                self._rebuild_dynamic_menus()
+
     def delete_scene_with_name(self, sender, scene_name):
         """Delete a scene using the passed scene name"""
         print(f"Deleting scene: {scene_name}")
@@ -444,10 +480,10 @@ class JamDeckApp(rumps.App):
             if scene_name in self.scenes:
                 self.scenes.remove(scene_name)
                 self.save_scenes()
-                
-                # Rebuild menus
-                self.rebuild_copy_scenes_menu()
-    
+
+                # Rebuild dynamic menus
+                self._rebuild_dynamic_menus()
+
 
 if __name__ == "__main__":
     app = JamDeckApp()
