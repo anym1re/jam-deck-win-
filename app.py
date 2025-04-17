@@ -67,7 +67,10 @@ class JamDeckApp(rumps.App):
     # --- Helper methods for populating dynamic menus ---
     def _populate_copy_menu(self, menu_item):
         """Populate the 'Copy Scene URL' menu."""
-        menu_item.clear() # Clear existing items
+        # Only clear if the menu item has existing sub-items
+        if len(menu_item) > 0:
+            menu_item.clear()
+            
         if not self.scenes:
             menu_item.add(rumps.MenuItem("No scenes defined", callback=None))
         else:
@@ -77,7 +80,10 @@ class JamDeckApp(rumps.App):
 
     def _populate_manage_menu(self, menu_item):
         """Populate the 'Manage Scenes' menu."""
-        menu_item.clear() # Clear existing items
+        # Only clear if the menu item has existing sub-items
+        if len(menu_item) > 0:
+            menu_item.clear()
+            
         menu_item.add(rumps.MenuItem("Add New Scene...", callback=self.add_new_scene))
         menu_item.add(None) # Separator
         
