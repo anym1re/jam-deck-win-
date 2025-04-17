@@ -238,39 +238,42 @@
                         // Add 5px buffer to ensure the last character is fully visible
                         const scrollDistance = -(textWidth - containerWidth + 5);
                         
-                        // Adjust animation duration based on text length
-                        // Longer text should scroll more slowly
-                        const baseDuration = 23; // Base duration in seconds
-                        let adjustedDuration = baseDuration;
-                        
-                        // Calculate a reasonable duration based on text length
-                        // Short texts should scroll at a moderate speed, longer ones slightly slower
+                        // --- New Duration Calculation for Consistent Speed ---
+                        let calculatedDuration = 23; // Default duration if no scroll needed or minimal overflow
+                        const minDuration = 15; // Minimum loop time to prevent extreme speed
+                        const maxDuration = 60; // Maximum loop time
+                        const scrollSpeed = 50; // Target pixels per second during scroll phase
+
                         if (textWidth > containerWidth) {
-                            // Slow down the scrolling speed significantly
-                            // Base speed: about 50px per second (previously 100px)
-                            // For a 300px scroll, that's 6 seconds of scroll time
                             const scrollAmount = textWidth - containerWidth;
-                            const scrollSpeed = 50; // pixels per second (half the previous speed)
-                            const scrollTime = scrollAmount / scrollSpeed;
                             
-                            // Total = 2s initial delay + scroll time + 0.8s pause + scroll time back + remaining time
-                            // We want to keep the total cycle at baseDuration (23s)
-                            const scrollComponent = scrollTime * 2 + 0.8; // scroll there + shorter pause + scroll back
+                            // Calculate time needed for one-way scroll at target speed
+                            const oneWayScrollTime = scrollAmount / scrollSpeed;
+
+                            // The CSS keyframes allocate 15% of the total duration for the scroll-out phase (15% to 30%)
+                            // So, oneWayScrollTime = 0.15 * totalDuration
+                            // Therefore, totalDuration = oneWayScrollTime / 0.15
+                            calculatedDuration = oneWayScrollTime / 0.15;
+
+                            // Add buffer for very short scrolls to prevent them being too fast overall
+                            // If scroll amount is small, the calculated duration might be very short.
+                            // Let's ensure a minimum reasonable loop time.
+                            calculatedDuration = Math.max(minDuration, calculatedDuration);
                             
-                            // Adjust only if the scrolling would take longer than 40% of the full duration
-                            if (scrollComponent > baseDuration * 0.4) {
-                                // Increased max duration to 45s (previously 35s)
-                                // to accommodate slower scrolling
-                                adjustedDuration = Math.min(45, baseDuration * 1.8);
-                                console.log(`[${this.innerElement.id}] Long text, adjusted duration: ${adjustedDuration}s`);
-                            }
+                            // Cap the duration to prevent excessively long loops for huge text
+                            calculatedDuration = Math.min(maxDuration, calculatedDuration);
+
+                            console.log(`[${this.innerElement.id}] Scroll Amount: ${scrollAmount.toFixed(1)}px, OneWayTime: ${oneWayScrollTime.toFixed(1)}s, Calculated Duration: ${calculatedDuration.toFixed(1)}s`);
+                        } else {
+                             console.log(`[${this.innerElement.id}] No scroll needed, using default duration.`);
                         }
-                        
+
                         // Set custom property for animation duration with error checking
                         try {
-                            this.innerElement.style.setProperty('--scroll-duration', `${adjustedDuration}s`);
-                            
-                            // Set the custom property for scroll distance
+                            // Use the newly calculated duration
+                            this.innerElement.style.setProperty('--scroll-duration', `${calculatedDuration}s`);
+
+                            // Set the custom property for scroll distance (still needed by keyframes)
                             this.innerElement.style.setProperty('--scroll-distance', `${scrollDistance}px`);
                             
                             // Debug check if custom properties are supported
@@ -293,9 +296,9 @@
                         } catch (e) {
                             console.error("Error setting CSS properties:", e);
                             // Fallback to inline styles if custom properties fail
-                            this.innerElement.style.animationDuration = `${adjustedDuration}s`;
+                            this.innerElement.style.animationDuration = `${calculatedDuration}s`;
                         }
-                        
+
                         // Add animation class
                         this.innerElement.classList.add('scrolling-active');
                     } else {
