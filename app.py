@@ -197,7 +197,8 @@ class JamDeckApp(rumps.App):
                 # Update state first to prevent monitor_server from triggering crash notification
                 self.server_running = False
                 self.server_process = None
-                self.actual_port = 8080 # Reset to default on stop
+                # Reset actual_port to the preferred port when stopping, not a hardcoded default
+                self.actual_port = self.preferred_port 
                 self.update_menu_state()
                 
                 # Terminate the server process
