@@ -176,10 +176,8 @@
                 this.outerElement = this.innerElement.parentElement; // Reference to the outer .scroll-text
                 this.container = this.outerElement.parentElement; // Reference to .scroll-container
                 this.originalText = '';
-                this.isScrolling = false; // Not actively used for CSS animation, but kept for state logic
                 this.needsScroll = false;
                 this.animationFrameRequest = null;
-                // Timers and JS-controlled duration properties removed
             }
 
             _measureWidths() {
@@ -309,12 +307,6 @@
                     }
                 });
             }
-            
-            // _calculateDynamicDuration method removed
-            
-            // _startAnimation method removed
-            
-            // _onAnimationEnd method removed
 
             updateText(newText) {
                 const textChanged = newText !== this.originalText;
@@ -338,9 +330,8 @@
 
             stop() {
                  console.log(`[${this.innerElement.id}] Stopping marquee (removing class).`);
-                // Timers removed
-                cancelAnimationFrame(this.animationFrameRequest); // Cancel pending measurement checks
-                this.isScrolling = false; 
+                // Cancel pending measurement checks
+                cancelAnimationFrame(this.animationFrameRequest);
                 
                 // Reset visual state by removing animation class
                 this.innerElement.classList.remove('scrolling-active');
@@ -381,7 +372,6 @@
             }
         }
 
-        // Old applyMarqueeIfNeeded function removed
         
         // Function to fetch and display song info
         function updateNowPlaying() {
@@ -438,19 +428,12 @@
                             if (!previousState || titleText !== previousState.title) {
                                 console.log(`[Main] Title changed: "${previousState?.title}" -> "${titleText}". Updating marquee.`);
                                 songTitleMarquee.updateText(titleText);
-                            } else {
-                                // If text didn't change, but maybe container size did, 
-                                // we could potentially re-check scroll needs without triggering initial delay.
-                                // For now, let's keep it simple and only update on text change.
-                                // songTitleMarquee._checkNeedsScroll(false); // Example: re-check without initial delay
                             }
                             
                             const prevArtistAlbumText = (previousState?.artist || '') + (previousState?.album ? ` • ${previousState.album}` : '');
                             if (!previousState || artistAlbumText !== prevArtistAlbumText) {
                                 console.log(`[Main] Artist/Album changed: "${prevArtistAlbumText}" -> "${artistAlbumText}". Updating marquee.`);
                                 songArtistMarquee.updateText(artistAlbumText);
-                            } else {
-                                // songArtistMarquee._checkNeedsScroll(false); // Example: re-check without initial delay
                             }
                             
                             // Update artwork
@@ -473,7 +456,6 @@
                                 artworkContainer.className = 'note-icon';
                             }
                             
-                            // Marquee logic is now handled by the controllers
                             
                         } else {
                             // Stop marquees and clear text if not playing or error
