@@ -11,7 +11,7 @@ import atexit
 import socket
 
 # Version information
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 # Set starting port for the server
 START_PORT = 8080
