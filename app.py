@@ -107,12 +107,10 @@ class JamDeckApp(rumps.App):
 
     def toggle_server(self, sender):
         """Toggle server on/off"""
-            rumps.MenuItem("Documentation", callback=self.open_documentation),
-            rumps.MenuItem("About", callback=self.show_about)
-        ]
-        
-        # Update menu text based on current state
-        self.update_menu_state()
+        if self.server_running:
+            self.stop_server()
+        else:
+            self.start_server()
 
     def update_menu_state(self):
         """Update the menu items and URL display based on server state"""
@@ -127,12 +125,8 @@ class JamDeckApp(rumps.App):
             self.server_url_display.set_callback(None) # Keep it non-clickable
             self.menu["Open in Browser"].set_callback(self.server_not_running) # Disable Open Browser
 
-    def toggle_server(self, sender):
-        """Toggle server on/off"""
-        if self.server_running:
-            self.stop_server()
-        else:
-            self.start_server()
+    # This toggle_server definition was duplicated and is removed by the previous block.
+    # The correct definition remains above.
 
     def start_server(self):
         """Start the music server"""
