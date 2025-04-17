@@ -25,13 +25,15 @@ class JamDeckApp(rumps.App):
         self.server_running = False
         self.server_process = None
         self.server_thread = None
-        self.actual_port = 8080 # Default port, will be updated
+        # self.actual_port = 8080 # Default port, will be updated # Removed old init
         
-        # Load saved scenes
-        self.scenes = self.load_scenes()
+        # Load configuration
+        self.scenes, self.preferred_port = self.load_config()
+        self.actual_port = self.preferred_port # Initially assume preferred port, will be updated by server output
 
         # --- Menu Setup ---
         # Create static items
+        set_port_item = rumps.MenuItem("Set Server Port...", callback=self.set_server_port)
         server_item = rumps.MenuItem("Start Server", callback=self.toggle_server)
         self.server_url_display = rumps.MenuItem(f"Server URL: http://localhost:{self.actual_port}", callback=None)
         self.server_url_display.set_callback(None) # Make it non-clickable initially
@@ -51,6 +53,7 @@ class JamDeckApp(rumps.App):
         self.menu = [
             server_item,
             self.server_url_display,
+            set_port_item, # Add Set Port item
             None,  # Separator
             self.copy_scenes_menu, # Add Copy menu
             self.manage_scenes_menu, # Add Manage menu
@@ -127,7 +130,8 @@ class JamDeckApp(rumps.App):
             self.menu["Open in Browser"].set_callback(self.open_browser) # Enable Open Browser
         else:
             self.menu["Start Server"].title = "Start Server"
-            self.server_url_display.title = "Server Stopped"
+            # Show preferred port when stopped
+            self.server_url_display.title = f"Server Stopped (Port: {self.preferred_port})"
             self.server_url_display.set_callback(None) # Keep it non-clickable
             self.menu["Open in Browser"].set_callback(self.server_not_running) # Disable Open Browser
 
@@ -145,11 +149,13 @@ class JamDeckApp(rumps.App):
                 # Use Python from the current executable
                 python_path = sys.executable
                 
-                # Start the server in a separate process
+                # Start the server in a separate process, passing the preferred port
+                cmd = [python_path, server_path, "--port", str(self.preferred_port)]
+                print(f"Starting server with command: {' '.join(cmd)}") # Debug output
                 self.server_process = subprocess.Popen(
-                    [python_path, server_path],
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.STDOUT,
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, # Redirect stderr to stdout
                     text=True,
                     encoding='utf-8'
                 )
@@ -317,28 +323,47 @@ class JamDeckApp(rumps.App):
                 "© 2025 Henry Manes"
             )
         )
-    
-    def load_scenes(self):
-        """Load saved scenes from config file"""
-        try:
-            config_path = os.path.join(os.path.expanduser("~"), ".jamdeck_scenes")
-            if os.path.exists(config_path):
-                with open(config_path, "r") as f:
-                    scenes = [line.strip() for line in f.readlines() if line.strip()]
-                    if not scenes:
-                        return ["default"]
-                    return scenes
-            return ["default"]
-        except Exception:
-            return ["default"]
 
-    def save_scenes(self):
-        """Save scenes to config file"""
+    # --- Configuration Loading/Saving ---
+    CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".jamdeck_config.json")
+    DEFAULT_PORT = 8080 # Define default port constant
+
+    def load_config(self):
+        """Load configuration (scenes and port) from JSON file."""
         try:
-            config_path = os.path.join(os.path.expanduser("~"), ".jamdeck_scenes")
-            with open(config_path, "w") as f:
-                for scene in self.scenes:
-                    f.write(f"{scene}\n")
+            if os.path.exists(self.CONFIG_FILE):
+                with open(self.CONFIG_FILE, "r") as f:
+                    config = json.load(f)
+                    # Ensure scenes is a list and contains 'default'
+                    scenes = config.get("scenes", ["default"])
+                    if not isinstance(scenes, list):
+                        scenes = ["default"]
+                    if "default" not in scenes:
+                        scenes.insert(0, "default") # Ensure default is always present and first
+
+                    # Load preferred port, validate it's an integer
+                    port = config.get("preferred_port", self.DEFAULT_PORT)
+                    if not isinstance(port, int):
+                        port = self.DEFAULT_PORT
+
+                    return scenes, port
+            else:
+                # Default config if file doesn't exist
+                return ["default"], self.DEFAULT_PORT
+        except (json.JSONDecodeError, Exception) as e:
+            print(f"Error loading config: {e}. Using defaults.")
+            # Return defaults in case of error
+            return ["default"], self.DEFAULT_PORT
+
+    def save_config(self):
+        """Save current configuration (scenes and port) to JSON file."""
+        config = {
+            "scenes": self.scenes,
+            "preferred_port": self.preferred_port
+        }
+        try:
+            with open(self.CONFIG_FILE, "w") as f:
+                json.dump(config, f, indent=4)
         except Exception as e:
             rumps.notification("Jam Deck", "Error", f"Could not save scenes: {str(e)}", sound=False)
 
@@ -402,7 +427,7 @@ class JamDeckApp(rumps.App):
             
             # Add the new scene
             self.scenes.append(scene_name)
-            self.save_scenes()
+            self.save_config() # Use new save method
 
             # Rebuild dynamic menus
             self._rebuild_dynamic_menus()
@@ -458,7 +483,7 @@ class JamDeckApp(rumps.App):
             if scene_name in self.scenes:
                 index = self.scenes.index(scene_name)
                 self.scenes[index] = sanitized_name
-                self.save_scenes()
+                self.save_config() # Use new save method
 
                 # Rebuild dynamic menus
                 self._rebuild_dynamic_menus()
@@ -479,7 +504,7 @@ class JamDeckApp(rumps.App):
             # Remove the scene
             if scene_name in self.scenes:
                 self.scenes.remove(scene_name)
-                self.save_scenes()
+                self.save_config() # Use new save method
 
                 # Rebuild dynamic menus
                 self._rebuild_dynamic_menus()

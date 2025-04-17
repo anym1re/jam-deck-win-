@@ -9,6 +9,7 @@ import zmq
 import signal
 import atexit
 import socket
+import argparse # Import argparse
 
 # Version information
 VERSION = "1.1.3"
@@ -340,15 +341,48 @@ class MusicHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"404 Not Found")
 
 # Start the web server, finding an available port
-def run_server():
+def run_server(preferred_port=None): # Accept preferred_port argument
     httpd = None
     actual_port = -1
-    
-    # Try ports starting from START_PORT
-    for i in range(MAX_PORT_ATTEMPTS):
-        port_to_try = START_PORT + i
+    port_found = False
+
+    # 1. Try the preferred port first if provided
+    if preferred_port:
+        print(f"Attempting to use preferred port: {preferred_port}")
         try:
-            # Initialize ZMQ context if needed (do this before server potentially fails)
+            # Initialize ZMQ context if needed
+            global zmq_context
+            if zmq_context is None:
+                zmq_context = zmq.Context()
+                print("ZMQ context initialized")
+
+            server_address = ('', preferred_port)
+            httpd = HTTPServer(server_address, MusicHandler)
+            actual_port = preferred_port
+            port_found = True # Mark as found
+            print(f"Successfully bound to preferred port {actual_port}")
+
+        except socket.error as e:
+            if e.errno == socket.errno.EADDRINUSE:
+                print(f"Preferred port {preferred_port} already in use. Falling back to automatic detection.")
+            else:
+                print(f"Error trying preferred port {preferred_port}: {e}")
+                # Don't immediately exit, allow fallback to automatic detection
+        except Exception as e:
+            print(f"Server setup error on preferred port {preferred_port}: {e}")
+            # Don't immediately exit, allow fallback to automatic detection
+
+    # 2. If preferred port failed or wasn't provided, try automatic detection
+    if not port_found:
+        print("Attempting automatic port detection...")
+        for i in range(MAX_PORT_ATTEMPTS):
+            port_to_try = START_PORT + i
+            # Skip the preferred port if it was already tried and failed
+            if preferred_port and port_to_try == preferred_port:
+                continue
+
+            try:
+                # Initialize ZMQ context if needed (might not have run above)
             global zmq_context
             if zmq_context is None:
                 zmq_context = zmq.Context()
@@ -365,10 +399,11 @@ def run_server():
             print(f"Starting music server on port {actual_port}...")
             print(f"Open http://localhost:{actual_port}/ in your browser or OBS")
             print(f"Press Ctrl+C to stop the server")
+            port_found = True # Mark as found
             break # Port found, exit loop
         except socket.error as e:
             if e.errno == socket.errno.EADDRINUSE:
-                print(f"Port {port_to_try} already in use, trying next...")
+                print(f"Port {port_to_try} is busy, trying next...")
                 continue # Try next port
             else:
                 print(f"Server error on port {port_to_try}: {e}")
@@ -379,8 +414,12 @@ def run_server():
             cleanup()
             return # Exit on other setup errors
 
-    if httpd is None:
-        print(f"Could not find an available port after {MAX_PORT_ATTEMPTS} attempts.")
+    # Check if a port was successfully found either way
+    if not port_found or httpd is None:
+        # Construct a more informative error message
+        error_message = f"Could not bind to the preferred port ({preferred_port}) " if preferred_port else ""
+        error_message += f"or find an available port in the range {START_PORT}-{START_PORT + MAX_PORT_ATTEMPTS - 1}."
+        print(error_message)
         cleanup()
         return
 
@@ -411,7 +450,13 @@ def run_server():
         cleanup()
 
 if __name__ == '__main__':
+    # --- Argument Parsing ---
+    parser = argparse.ArgumentParser(description="Jam Deck Music Server")
+    parser.add_argument('--port', type=int, help='Preferred port number to start the server on.')
+    args = parser.parse_args()
+    # --- End Argument Parsing ---
+
     # Force output buffering off for better debugging
     sys.stdout.reconfigure(line_buffering=True)
     print(f"Jam Deck v{VERSION} - Music Now Playing Server")
-    run_server()
+    run_server(preferred_port=args.port) # Pass preferred port to run_server
