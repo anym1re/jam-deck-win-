@@ -391,19 +391,20 @@ def run_server(preferred_port=None): # Accept preferred_port argument
                 server_address = ('', port_to_try)
                 httpd = HTTPServer(server_address, MusicHandler)
                 actual_port = port_to_try
-            
-            # IMPORTANT: Print the port for the parent process BEFORE other messages
-            print(f"JAMDECK_PORT={actual_port}")
-            sys.stdout.flush() # Ensure it's sent immediately
-            
-            print(f"Starting music server on port {actual_port}...")
-            print(f"Open http://localhost:{actual_port}/ in your browser or OBS")
-            print(f"Press Ctrl+C to stop the server")
-            port_found = True # Mark as found
-            break # Port found, exit loop
-        except socket.error as e:
-            if e.errno == socket.errno.EADDRINUSE:
-                print(f"Port {port_to_try} is busy, trying next...")
+
+                # IMPORTANT: Print the port for the parent process BEFORE other messages
+                print(f"JAMDECK_PORT={actual_port}")
+                sys.stdout.flush() # Ensure it's sent immediately
+                
+                print(f"Starting music server on port {actual_port}...")
+                print(f"Open http://localhost:{actual_port}/ in your browser or OBS")
+                print(f"Press Ctrl+C to stop the server")
+                port_found = True # Mark as found
+                break # Port found, exit loop
+                
+            except socket.error as e:
+                if e.errno == socket.errno.EADDRINUSE:
+                    print(f"Port {port_to_try} is busy, trying next...")
                 continue # Try next port
             else:
                 print(f"Server error on port {port_to_try}: {e}")
