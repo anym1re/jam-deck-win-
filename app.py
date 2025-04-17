@@ -349,10 +349,10 @@ class JamDeckApp(rumps.App):
                 # If conversion and range check pass, proceed
                 if port_num != self.preferred_port:
                     self.preferred_port = port_num
-                        self.save_config() # Save the new port
+                    self.save_config() # Save the new port
 
-                        # Decide on action based on whether server was running
-                        if was_running:
+                    # Decide on action based on whether server was running
+                    if was_running:
                             print("Port changed while server running. Restarting server...")
                             rumps.notification(
                                 title="Port Updated",
