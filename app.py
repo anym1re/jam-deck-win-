@@ -326,31 +326,47 @@ class JamDeckApp(rumps.App):
 
     def set_server_port(self, _):
         """Show dialog to set the preferred server port."""
+        # Make window narrower
         response = rumps.Window(
             title="Set Preferred Server Port",
-            message=f"Enter the preferred port number (1024-65535).\nDefault: {self.DEFAULT_PORT}\nCurrent: {self.preferred_port}",
+            message=f"Enter port (1024-65535).\nDefault: {self.DEFAULT_PORT}, Current: {self.preferred_port}",
             default_text=str(self.preferred_port),
-            dimensions=(300, 40) # Slightly taller for more text
+            dimensions=(220, 40) # Narrower window
         ).run()
 
         if response.clicked and response.text:
+            was_running = self.server_running # Check server state BEFORE changing port
             try:
                 port_num = int(response.text)
                 if 1024 <= port_num <= 65535:
                     if port_num != self.preferred_port:
                         self.preferred_port = port_num
-                        self.save_config()
-                        # Correctly call notification with title, subtitle, and message
-                        rumps.notification(
-                            title="Port Updated", 
-                            subtitle=f"Preferred port set to {self.preferred_port}", 
-                            message="Restart the server for the change to take effect.", 
-                            sound=False
-                        )
-                        # Update display if server isn't running
-                        if not self.server_running:
-                             self.actual_port = self.preferred_port # Update actual_port display placeholder
-                             self.update_menu_state()
+                        self.save_config() # Save the new port
+
+                        # Decide on action based on whether server was running
+                        if was_running:
+                            print("Port changed while server running. Restarting server...")
+                            rumps.notification(
+                                title="Port Updated",
+                                subtitle=f"Preferred port set to {self.preferred_port}",
+                                message="Restarting server now...",
+                                sound=False
+                            )
+                            self.stop_server()
+                            # Short delay before restarting might be needed
+                            time.sleep(0.5) 
+                            self.start_server()
+                        else:
+                            print("Port changed while server stopped.")
+                            # Update display placeholder and notify
+                            self.actual_port = self.preferred_port 
+                            self.update_menu_state()
+                            rumps.notification(
+                                title="Port Updated",
+                                subtitle=f"Preferred port set to {self.preferred_port}",
+                                message="Server will use this port on next start.",
+                                sound=False
+                            )
                     # No need for an 'else' alert if port is unchanged
                 else:
                     raise ValueError("Port must be between 1024 and 65535.")
@@ -361,32 +377,74 @@ class JamDeckApp(rumps.App):
     CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".jamdeck_config.json")
     DEFAULT_PORT = 8080 # Define default port constant
 
+    OLD_SCENES_FILE = os.path.join(os.path.expanduser("~"), ".jamdeck_scenes")
+
     def load_config(self):
-        """Load configuration (scenes and port) from JSON file."""
+        """Load configuration (scenes and port) from JSON file, migrating old format if necessary."""
+        scenes = ["default"]
+        port = self.DEFAULT_PORT
+
         try:
+            # Prioritize loading from the new JSON config file
             if os.path.exists(self.CONFIG_FILE):
                 with open(self.CONFIG_FILE, "r") as f:
                     config = json.load(f)
-                    # Ensure scenes is a list and contains 'default'
+                    # Load scenes, ensuring 'default' is present
                     scenes = config.get("scenes", ["default"])
                     if not isinstance(scenes, list):
                         scenes = ["default"]
                     if "default" not in scenes:
                         scenes.insert(0, "default") # Ensure default is always present and first
 
-                    # Load preferred port, validate it's an integer
-                    port = config.get("preferred_port", self.DEFAULT_PORT)
-                    if not isinstance(port, int):
-                        port = self.DEFAULT_PORT
+                    loaded_scenes = config.get("scenes", ["default"])
+                    if isinstance(loaded_scenes, list) and loaded_scenes:
+                        scenes = loaded_scenes
+                    if "default" not in scenes:
+                        scenes.insert(0, "default")
 
-                    return scenes, port
+                    # Load preferred port, validate it's an integer
+                    loaded_port = config.get("preferred_port", self.DEFAULT_PORT)
+                    if isinstance(loaded_port, int):
+                        port = loaded_port
+                    
+                    print(f"Loaded config from JSON: Scenes={scenes}, Port={port}")
+                    return scenes, port # Return loaded config
+
+            # If JSON doesn't exist, check for old scenes file for migration
+            elif os.path.exists(self.OLD_SCENES_FILE):
+                print("Migrating scenes from old .jamdeck_scenes file...")
+                with open(self.OLD_SCENES_FILE, "r") as f:
+                    loaded_scenes = [line.strip() for line in f.readlines() if line.strip()]
+                    if loaded_scenes:
+                         scenes = loaded_scenes
+                    if "default" not in scenes:
+                        scenes.insert(0, "default")
+                
+                # Use default port during migration
+                port = self.DEFAULT_PORT 
+                
+                # Save immediately in the new format and remove old file
+                self.scenes = scenes
+                self.preferred_port = port
+                self.save_config() 
+                try:
+                    os.remove(self.OLD_SCENES_FILE)
+                    print("Removed old scenes file.")
+                except OSError as rm_err:
+                    print(f"Warning: Could not remove old scenes file: {rm_err}")
+                
+                print(f"Migrated config: Scenes={scenes}, Port={port}")
+                return scenes, port
+
             else:
-                # Default config if file doesn't exist
+                # No config files exist, use defaults
+                print("No config file found. Using defaults.")
                 return ["default"], self.DEFAULT_PORT
+                
         except (json.JSONDecodeError, Exception) as e:
             print(f"Error loading config: {e}. Using defaults.")
             # Return defaults in case of error
-            return ["default"], self.DEFAULT_PORT
+            return ["default"], self.DEFAULT_PORT # Ensure defaults are returned on error
 
     def save_config(self):
         """Save current configuration (scenes and port) to JSON file."""
