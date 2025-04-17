@@ -223,7 +223,6 @@ body {
     display: inline-block; /* Outer element handles layout */
     padding: 0; 
     margin: 0; 
-    /* Position and transform moved to inner span */
 }
 
 .scroll-text .inner-scroll {
@@ -238,7 +237,6 @@ body {
 /* Apply animation via this class to the inner span - CSS controls timing/loops */
 .scroll-text .inner-scroll.scrolling-active {
     animation-name: scrollText;
-    /* Explicit fallback duration in case custom property isn't supported */
     animation-duration: var(--scroll-duration, 23s); /* Custom duration based on text length */
     animation-timing-function: ease-in-out;
     animation-delay: 2s; /* Initial delay before first scroll */
