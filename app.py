@@ -327,12 +327,15 @@ class JamDeckApp(rumps.App):
 
     def set_server_port(self, _):
         """Show dialog to set the preferred server port."""
-        # Make window narrower
+        # Define message based on server state
+        current_state_msg = "The server will restart if running." if self.server_running else "Change applies on next start."
+        
+        # Make window narrower and update message
         response = rumps.Window(
-            title="Set Preferred Server Port",
-            message=f"Enter port (1024-65535).\nDefault: {self.DEFAULT_PORT}, Current: {self.preferred_port}",
+            title="Set Server Port",
+            message=f"Enter port (1024-65535).\n{current_state_msg}",
             default_text=str(self.preferred_port),
-            dimensions=(220, 40) # Narrower window
+            dimensions=(200, 55) # Narrower window, slightly taller for new message line
         ).run()
 
         if response.clicked and response.text:
