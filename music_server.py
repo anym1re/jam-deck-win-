@@ -342,6 +342,7 @@ class MusicHandler(BaseHTTPRequestHandler):
 
 # Start the web server, finding an available port
 def run_server(preferred_port=None): # Accept preferred_port argument
+    global zmq_context # Declare zmq_context as global for this function's scope
     httpd = None
     actual_port = -1
     port_found = False
@@ -350,8 +351,7 @@ def run_server(preferred_port=None): # Accept preferred_port argument
     if preferred_port:
         print(f"Attempting to use preferred port: {preferred_port}")
         try:
-            # Initialize ZMQ context if needed
-            global zmq_context
+            # Initialize ZMQ context if needed (now using function-scoped global)
             if zmq_context is None:
                 zmq_context = zmq.Context()
                 print("ZMQ context initialized")
@@ -382,8 +382,7 @@ def run_server(preferred_port=None): # Accept preferred_port argument
                 continue
 
             try:
-                # Initialize ZMQ context if needed (might not have run above)
-                global zmq_context
+                # Initialize ZMQ context if needed (now using function-scoped global)
                 if zmq_context is None:
                     zmq_context = zmq.Context()
                     print("ZMQ context initialized") # Keep this informational message
