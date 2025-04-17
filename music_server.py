@@ -44,90 +44,108 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 # Function to get current Apple Music track via AppleScript
 def get_apple_music_track():
-    script = '''
+    # Define a unique delimiter unlikely to be in metadata
+    delimiter = "|||"
+    
+    # Modified AppleScript to return delimited data instead of JSON
+    script = f'''
+    set output_delimiter to "{delimiter}"
+    
     tell application "Music"
         if player state is playing then
-            set currentTrack to current track
-            set songName to name of currentTrack
-            set artistName to artist of currentTrack
-            set albumName to album of currentTrack
-            
-            -- Try to get album artwork
-            set hasArtwork to false
-            
             try
-                -- Get artwork from current track
-                set myArtwork to artwork 1 of currentTrack
+                set currentTrack to current track
+                set songName to name of currentTrack
+                set artistName to artist of currentTrack
+                set albumName to album of currentTrack
                 
-                -- Set file path - use a fixed location in /tmp
-                set artworkFile to "/tmp/harmony_deck_cover.jpg"
-                
-                -- Get artwork data and write to file
-                if format of myArtwork is JPEG picture then
-                    set myPicture to data of myArtwork
-                    
-                    -- Write to file
-                    set myFile to (open for access (POSIX file artworkFile) with write permission)
-                    set eof of myFile to 0
-                    write myPicture to myFile
+                -- Try to get album artwork
+                set hasArtwork to false
+                try
+                    set myArtwork to artwork 1 of currentTrack
+                    set artworkFile to "/tmp/harmony_deck_cover.jpg"
+                    if format of myArtwork is JPEG picture then
+                        set myPicture to data of myArtwork
+                        set myFile to (open for access (POSIX file artworkFile) with write permission)
+                        set eof of myFile to 0
+                        write myPicture to myFile
                         try
                             close access (POSIX file artworkFile)
                         end try
-
-
-
-                    
-                    set hasArtwork to true
-                end if
+                        set hasArtwork to true
+                    end if
+                on error errMsg
+                    -- Log error but continue
+                    do shell script "echo 'Artwork error: " & errMsg & "' >> /tmp/harmony-deck-log.txt"
+                end try
                 
-            on error errMsg
-                -- Log error but continue
-                do shell script "echo 'Artwork error: " & errMsg & "' >> /tmp/harmony-deck-log.txt"
+                -- Return delimited string: playing_state|||title|||artist|||album|||has_artwork
+                return "true" & output_delimiter & songName & output_delimiter & artistName & output_delimiter & albumName & output_delimiter & hasArtwork
+                
+            on error readErr
+                -- Error reading track details
+                return "false" & output_delimiter & "Error reading track: " & readErr
             end try
-            
-            -- Return JSON with artwork path if artwork was successfully saved
-            if hasArtwork then
-                return "{\\\"playing\\\": true, \\\"title\\\": \\\"" & songName & "\\\", \\\"artist\\\": \\\"" & artistName & "\\\", \\\"album\\\": \\\"" & albumName & "\\\", \\\"artworkPath\\\": \\\"/artwork?t=" & (do shell script "date +%s") & "\\\"}"
-            else
-                return "{\\\"playing\\\": true, \\\"title\\\": \\\"" & songName & "\\\", \\\"artist\\\": \\\"" & artistName & "\\\", \\\"album\\\": \\\"" & albumName & "\\\"}"
-            end if
         else
-            return "{\\\"playing\\\": false}"
+            -- Not playing
+            return "false" & output_delimiter & "Not playing"
         end if
     end tell
     '''
     
     try:
-        # Debug info
         print("Executing AppleScript...")
-        
-        # Run the AppleScript with a timeout to prevent freezing
         result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True, timeout=5)
         
-        # Print the raw output for debugging
         print(f"AppleScript raw output: {result.stdout}")
-        print(f"AppleScript error output: {result.stderr}")
+        if result.stderr:
+            print(f"AppleScript error output: {result.stderr}")
         
-        # Make sure we actually have output
-        if not result.stdout.strip():
+        output = result.stdout.strip()
+        if not output:
             print("Warning: Empty response from AppleScript")
             return json.dumps({"playing": False, "error": "Empty response from AppleScript"})
+            
+        # Parse the delimited string
+        parts = output.split(delimiter)
         
-        # Try to parse as JSON to verify it's valid
-        try:
-            json_obj = json.loads(result.stdout.strip())
-            return result.stdout.strip()
-        except json.JSONDecodeError as e:
-            print(f"JSON parsing error: {e}")
-            print(f"Invalid JSON: {result.stdout.strip()}")
-            # Return a fallback JSON if the AppleScript output isn't valid JSON
-            return json.dumps({"playing": False, "error": "Invalid JSON from AppleScript"})
+        # Check if the first part indicates playing status
+        is_playing = parts[0].lower() == 'true'
+        
+        if is_playing:
+            # Expect 5 parts: playing, title, artist, album, has_artwork
+            if len(parts) == 5:
+                title, artist, album, has_artwork_str = parts[1], parts[2], parts[3], parts[4]
+                has_artwork = has_artwork_str.lower() == 'true'
+                
+                # Build the data dictionary
+                data = {
+                    "playing": True,
+                    "title": title,
+                    "artist": artist,
+                    "album": album
+                }
+                
+                # Add artwork path if available
+                if has_artwork:
     except subprocess.TimeoutExpired:
         print("Error: AppleScript timed out after 5 seconds")
         return json.dumps({"playing": False, "error": "AppleScript timed out"})
+    except FileNotFoundError:
+        # Handle case where artwork file might not exist when getting timestamp
+        print("Error: Artwork file not found for timestamp.")
+        # Return data without artwork path
+        data = {
+            "playing": True,
+            "title": title,
+            "artist": artist,
+            "album": album
+        }
+        return json.dumps(data)
     except Exception as e:
-        print(f"Error executing AppleScript: {e}")
-        return json.dumps({"playing": False, "error": str(e)})
+        print(f"Error processing AppleScript output: {e}")
+        # Attempt to return a generic error if parsing failed badly
+        return json.dumps({"playing": False, "error": f"Python processing error: {str(e)}"})
 
 # Create custom HTTP request handler
 class MusicHandler(BaseHTTPRequestHandler):
