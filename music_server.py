@@ -405,14 +405,14 @@ def run_server(preferred_port=None): # Accept preferred_port argument
             except socket.error as e:
                 if e.errno == socket.errno.EADDRINUSE:
                     print(f"Port {port_to_try} is busy, trying next...")
-                continue # Try next port
-            else:
-                print(f"Server error on port {port_to_try}: {e}")
+                    continue # Try next port (Now correctly indented)
+                else: # This else correctly handles other socket errors
+                    print(f"Server error on port {port_to_try}: {e}")
+                    cleanup()
+                    return # Exit if other socket error
+            except Exception as e: # This except handles non-socket errors from the try block
+                print(f"Server setup error on port {port_to_try}: {e}")
                 cleanup()
-                return # Exit if other socket error
-        except Exception as e:
-            print(f"Server setup error on port {port_to_try}: {e}")
-            cleanup()
             return # Exit on other setup errors
 
     # Check if a port was successfully found either way
