@@ -324,6 +324,33 @@ class JamDeckApp(rumps.App):
             )
         )
 
+    def set_server_port(self, _):
+        """Show dialog to set the preferred server port."""
+        response = rumps.Window(
+            title="Set Preferred Server Port",
+            message=f"Enter the preferred port number (1024-65535).\nDefault: {self.DEFAULT_PORT}\nCurrent: {self.preferred_port}",
+            default_text=str(self.preferred_port),
+            dimensions=(300, 40) # Slightly taller for more text
+        ).run()
+
+        if response.clicked and response.text:
+            try:
+                port_num = int(response.text)
+                if 1024 <= port_num <= 65535:
+                    if port_num != self.preferred_port:
+                        self.preferred_port = port_num
+                        self.save_config()
+                        rumps.notification("Port Updated", f"Preferred port set to {self.preferred_port}.\nRestart the server for the change to take effect.", sound=False)
+                        # Update display if server isn't running
+                        if not self.server_running:
+                             self.actual_port = self.preferred_port # Update actual_port display placeholder
+                             self.update_menu_state()
+                    # No need for an 'else' alert if port is unchanged
+                else:
+                    raise ValueError("Port must be between 1024 and 65535.")
+            except ValueError as e:
+                rumps.alert("Invalid Port", f"Error: {e}")
+
     # --- Configuration Loading/Saving ---
     CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".jamdeck_config.json")
     DEFAULT_PORT = 8080 # Define default port constant
