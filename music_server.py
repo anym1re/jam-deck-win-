@@ -51,11 +51,12 @@ def get_apple_music_track():
     # Modified AppleScript to return delimited data instead of JSON
     script = f'''
     set output_delimiter to "{delimiter}"
-    
-    tell application "Music"
-        if player state is playing then
-            try
-                set currentTrack to current track
+
+    if application "Music" is running then
+        tell application "Music"
+            if player state is playing then
+                try
+                    set currentTrack to current track
                 set songName to name of currentTrack
                 set artistName to artist of currentTrack
                 set albumName to album of currentTrack
@@ -84,14 +85,18 @@ def get_apple_music_track():
                 return "true" & output_delimiter & songName & output_delimiter & artistName & output_delimiter & albumName & output_delimiter & hasArtwork
                 
             on error readErr
-                -- Error reading track details
-                return "false" & output_delimiter & "Error reading track: " & readErr
-            end try
-        else
-            -- Not playing
-            return "false" & output_delimiter & "Not playing"
-        end if
-    end tell
+                    -- Error reading track details
+                    return "false" & output_delimiter & "Error reading track: " & readErr
+                end try
+            else
+                -- Not playing but app is running
+                return "false" & output_delimiter & "Not playing"
+            end if
+        end tell
+    else
+        -- Music app is not running
+        return "not_running" & output_delimiter & "Music app not running"
+    end if
     '''
     
     try:
@@ -110,11 +115,11 @@ def get_apple_music_track():
         # Parse the delimited string
         parts = output.split(delimiter)
         
-        # Check if the first part indicates playing status
-        is_playing = parts[0].lower() == 'true'
+        # Check the status from the first part
+        status = parts[0].lower()
         
-        if is_playing:
-            # Expect 5 parts: playing, title, artist, album, has_artwork
+        if status == 'true':
+            # Playing: Expect 5 parts: playing, title, artist, album, has_artwork
             if len(parts) == 5:
                 title, artist, album, has_artwork_str = parts[1], parts[2], parts[3], parts[4]
                 has_artwork = has_artwork_str.lower() == 'true'
@@ -143,14 +148,23 @@ def get_apple_music_track():
             else:
                 print(f"Error: Unexpected number of parts from AppleScript when playing. Parts: {parts}")
                 return json.dumps({"playing": False, "error": "Malformed response from AppleScript (playing)"})
-        else:
+        elif status == 'false':
             # Not playing or error reading track
             error_message = parts[1] if len(parts) > 1 else "Unknown state"
-            print(f"Music app not playing or error: {error_message}")
+            print(f"Music app state: {error_message}")
             # Return None for error if it's just "Not playing"
             error_payload = error_message if "Error reading track" in error_message else None
             return json.dumps({"playing": False, "error": error_payload})
-            
+        elif status == 'not_running':
+            # Music app not running
+            error_message = parts[1] if len(parts) > 1 else "Music app not running"
+            print(error_message)
+            return json.dumps({"playing": False, "error": error_message})
+        else:
+            # Unexpected status from AppleScript
+            print(f"Error: Unexpected status from AppleScript: {status}. Parts: {parts}")
+            return json.dumps({"playing": False, "error": "Unknown response from AppleScript"})
+
     except subprocess.TimeoutExpired:
         print("Error: AppleScript timed out after 5 seconds")
         return json.dumps({"playing": False, "error": "AppleScript timed out"})
