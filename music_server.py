@@ -383,14 +383,14 @@ def run_server(preferred_port=None): # Accept preferred_port argument
 
             try:
                 # Initialize ZMQ context if needed (might not have run above)
-            global zmq_context
-            if zmq_context is None:
-                zmq_context = zmq.Context()
-                print("ZMQ context initialized") # Keep this informational message
+                global zmq_context
+                if zmq_context is None:
+                    zmq_context = zmq.Context()
+                    print("ZMQ context initialized") # Keep this informational message
 
-            server_address = ('', port_to_try)
-            httpd = HTTPServer(server_address, MusicHandler)
-            actual_port = port_to_try
+                server_address = ('', port_to_try)
+                httpd = HTTPServer(server_address, MusicHandler)
+                actual_port = port_to_try
             
             # IMPORTANT: Print the port for the parent process BEFORE other messages
             print(f"JAMDECK_PORT={actual_port}")
