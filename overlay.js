@@ -395,11 +395,22 @@
                 if (!text || text.trim() === '') {
                     throw new Error('Empty response from server');
                 }
+
+                // Add logging for raw text in debug mode
+                if (debugMode) {
+                    console.log("[Debug] Raw response text:", text);
+                }
                 
                 // Try to parse as JSON
                 try {
                     const data = JSON.parse(text);
                     errorCount = 0; // Reset error count on success
+
+                    // Add logging for parsed data and previous state in debug mode
+                    if (debugMode) {
+                        console.log("[Debug] Parsed data:", JSON.stringify(data));
+                        console.log("[Debug] Previous state:", JSON.stringify(previousState));
+                    }
                     
                     // Only update the UI if the data has changed
                     if (JSON.stringify(data) !== JSON.stringify(previousState)) {
