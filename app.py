@@ -381,71 +381,101 @@ class JamDeckApp(rumps.App):
     OLD_SCENES_FILE = os.path.join(os.path.expanduser("~"), ".jamdeck_scenes")
 
     def load_config(self):
-        """Load configuration (scenes and port) from JSON file, migrating old format if necessary."""
-        scenes = ["default"]
-        port = self.DEFAULT_PORT
+        """Load configuration (scenes and port) from JSON file, merging old format if necessary."""
+        loaded_scenes = ["default"]
+        loaded_port = self.DEFAULT_PORT
+        config_updated = False # Flag to track if we need to save merged data
 
         try:
-            # Prioritize loading from the new JSON config file
+            # 1. Try loading from the new JSON config file first
             if os.path.exists(self.CONFIG_FILE):
                 with open(self.CONFIG_FILE, "r") as f:
-                    config = json.load(f)
-                    # Load scenes, ensuring 'default' is present
-                    scenes = config.get("scenes", ["default"])
-                    if not isinstance(scenes, list):
-                        scenes = ["default"]
-                    if "default" not in scenes:
-                        scenes.insert(0, "default") # Ensure default is always present and first
+                    try:
+                        config = json.load(f)
+                        # Load scenes, ensuring 'default' is present
+                        json_scenes = config.get("scenes", ["default"])
+                        if isinstance(json_scenes, list) and json_scenes:
+                            loaded_scenes = json_scenes
+                        if "default" not in loaded_scenes:
+                            loaded_scenes.insert(0, "default")
 
-                    loaded_scenes = config.get("scenes", ["default"])
-                    if isinstance(loaded_scenes, list) and loaded_scenes:
-                        scenes = loaded_scenes
-                    if "default" not in scenes:
-                        scenes.insert(0, "default")
+                        # Load preferred port, validate it's an integer
+                        json_port = config.get("preferred_port", self.DEFAULT_PORT)
+                        if isinstance(json_port, int):
+                            loaded_port = json_port
+                        
+                        print(f"Loaded config from JSON: Scenes={loaded_scenes}, Port={loaded_port}")
+                    except json.JSONDecodeError as json_err:
+                         print(f"Warning: Error decoding JSON config file: {json_err}. Will check for old file.")
+                         # Proceed to check for old file even if JSON is corrupt
 
-                    # Load preferred port, validate it's an integer
-                    loaded_port = config.get("preferred_port", self.DEFAULT_PORT)
-                    if isinstance(loaded_port, int):
-                        port = loaded_port
-                    
-                    print(f"Loaded config from JSON: Scenes={scenes}, Port={port}")
-                    return scenes, port # Return loaded config
-
-            # If JSON doesn't exist, check for old scenes file for migration
-            elif os.path.exists(self.OLD_SCENES_FILE):
-                print("Migrating scenes from old .jamdeck_scenes file...")
-                with open(self.OLD_SCENES_FILE, "r") as f:
-                    loaded_scenes = [line.strip() for line in f.readlines() if line.strip()]
-                    if loaded_scenes:
-                         scenes = loaded_scenes
-                    if "default" not in scenes:
-                        scenes.insert(0, "default")
-                
-                # Use default port during migration
-                port = self.DEFAULT_PORT 
-                
-                # Save immediately in the new format and remove old file
-                self.scenes = scenes
-                self.preferred_port = port
-                self.save_config() 
+            # 2. Check if the old scenes file exists
+            if os.path.exists(self.OLD_SCENES_FILE):
+                print("Old scenes file found. Checking for scenes to migrate...")
+                old_scenes_list = []
                 try:
-                    os.remove(self.OLD_SCENES_FILE)
-                    print("Removed old scenes file.")
-                except OSError as rm_err:
-                    print(f"Warning: Could not remove old scenes file: {rm_err}")
-                
-                print(f"Migrated config: Scenes={scenes}, Port={port}")
-                return scenes, port
+                    with open(self.OLD_SCENES_FILE, "r") as f:
+                        old_scenes_list = [line.strip() for line in f.readlines() if line.strip()]
+                except Exception as read_err:
+                     print(f"Warning: Could not read old scenes file: {read_err}")
 
-            else:
-                # No config files exist, use defaults
-                print("No config file found. Using defaults.")
-                return ["default"], self.DEFAULT_PORT
+                # 3. Merge scenes (add old scenes not already present)
+                # Use a set for efficient checking, but maintain order from loaded_scenes
+                existing_scenes_set = set(loaded_scenes)
+                scenes_added = False
+                for scene in old_scenes_list:
+                    if scene not in existing_scenes_set:
+                        loaded_scenes.append(scene)
+                        existing_scenes_set.add(scene)
+                        scenes_added = True
+                        config_updated = True # Mark that we need to save
+                        print(f"Migrated scene: {scene}")
                 
-        except (json.JSONDecodeError, Exception) as e:
-            print(f"Error loading config: {e}. Using defaults.")
-            # Return defaults in case of error
-            return ["default"], self.DEFAULT_PORT # Ensure defaults are returned on error
+                if scenes_added:
+                     print("Finished migrating scenes.")
+                else:
+                     print("No new scenes to migrate from old file.")
+
+                # 4. If migration happened, save the merged config
+                if config_updated:
+                    print("Saving merged configuration to JSON...")
+                    # Use the potentially updated loaded_scenes and the port loaded from JSON (or default)
+                    self.scenes = loaded_scenes 
+                    self.preferred_port = loaded_port
+                    try:
+                        self.save_config() # Call save_config directly
+                        print("Merged config saved successfully.")
+                        # 5. Attempt to remove old file ONLY after successful save
+                        try:
+                            os.remove(self.OLD_SCENES_FILE)
+                            print("Removed old scenes file.")
+                        except OSError as rm_err:
+                            print(f"Warning: Could not remove old scenes file after migration: {rm_err}")
+                    except Exception as save_err:
+                         print(f"Error saving merged config: {save_err}. Old file not removed.")
+                         # Keep config_updated = True? Maybe not, if save failed. Let's reset.
+                         config_updated = False # Revert flag as save failed
+                         # Revert self.scenes/port to what was loaded initially? Or just return defaults?
+                         # Let's return what we managed to load initially before the failed save.
+                         # The initial load logic already handled defaults if JSON load failed.
+
+                # If no scenes were added, but the old file still exists, try removing it
+                elif not scenes_added:
+                     try:
+                         os.remove(self.OLD_SCENES_FILE)
+                         print("Removed redundant old scenes file.")
+                     except OSError as rm_err:
+                         print(f"Warning: Could not remove redundant old scenes file: {rm_err}")
+
+
+            # 6. Return the final state
+            print(f"Final loaded config: Scenes={loaded_scenes}, Port={loaded_port}")
+            return loaded_scenes, loaded_port
+
+        except Exception as e:
+            print(f"Unexpected error during config loading/migration: {e}. Using defaults.")
+            # Return defaults in case of any unexpected error
+            return ["default"], self.DEFAULT_PORT
 
     def save_config(self):
         """Save current configuration (scenes and port) to JSON file."""
