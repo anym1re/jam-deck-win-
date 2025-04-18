@@ -46,27 +46,29 @@ A customizable Apple Music now playing display for macOS.
 
 To continue, jump to [Menu Bar App](#menu-bar-app).
 
-### Option 2: Manual Installation (Advanced)
+<details>
+<summary>Option 2: Manual Installation (Advanced)</summary>
 
 **Requirements:**
 - Python 3.6 or later
 
 Steps:
 1. Clone this repository:
-   ```
+   ```bash
    git clone https://github.com/yourusername/jam-deck.git
    cd jam-deck
    ```
 
 2. Make sure the Python script is executable:
-   ```
+   ```bash
    chmod +x music_server.py
    ```
 
 3. Start the server:
-   ```
+   ```bash
    ./music_server.py
    ```
+</details>
 
 ## Usage
 
@@ -134,20 +136,29 @@ In the settings menu:
 
 ## Troubleshooting
 
-**No music information appears:**
+<details>
+<summary>No music information appears</summary>
+
 - Make sure the server is running.
 - Make sure Apple Music is running.
 - Try playing/pausing music to trigger an update.
 
-**Permission errors:**
+</details>
+
+<details>
+<summary>Permission errors</summary>
+
 - macOS may need permission to control Apple Music.
 - Go to System Preferences → Security & Privacy → Automation.
 - Ensure "Jam Deck" has permission to control Apple Music.
 - If you see a permissions prompt when launching the app, click "OK" to allow access.
 
+</details>
+
 ## Auto-Start on Boot
 
-### Using the Menu Bar App
+<details>
+<summary>Using the Menu Bar App</summary>
 
 If you're using the menu bar app (Option 1 installation):
 
@@ -156,7 +167,10 @@ If you're using the menu bar app (Option 1 installation):
 3. Browse to your Applications folder and select "Jam Deck.app"
 4. The app will now start automatically at login.
 
-### Using the Manual Installation
+</details>
+
+<details>
+<summary>Using the Manual Installation</summary>
 
 If you're using the manual installation:
 
@@ -170,6 +184,8 @@ If you're using the manual installation:
 2. Add to Login Items:
    - System Preferences → Users & Groups → Login Items.
    - Add the Automator application you created.
+
+</details>
 
 ## Customization
 
