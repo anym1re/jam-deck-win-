@@ -109,7 +109,7 @@ To add Jam Deck to your OBS scene:
 
 ### Theme Selection
 
-Hover over the overlay (right-click > Interact or press the Interact button below the preview) to reveal the settings menu:
+Hover over the overlay and right-click > Interact, or select the Source and press the Interact button below the preview to reveal the settings menu:
 
 #### Rounded Themes
 - **Natural** (default): Soft green theme with rounded corners.
