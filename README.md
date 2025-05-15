@@ -35,7 +35,7 @@ A customizable Apple Music now playing display for macOS.
 
 ## Installation
 
-### Option 1: Menu Bar App (Recommended)
+### Recommended: Menu Bar App
 
 1. Download the latest Jam Deck.app from the [Releases](https://github.com/detekoi/jam-deck/releases/) page.
 2. Move to your Applications folder.
@@ -47,7 +47,7 @@ A customizable Apple Music now playing display for macOS.
 To continue, jump to [Menu Bar App](#menu-bar-app).
 
 <details>
-<summary>Option 2: Manual Installation (Advanced)</summary>
+<summary><h3>Advanced: Manual Installation</h3></summary>
 
 **Requirements:**
 - Python 3.6 or later
@@ -109,7 +109,7 @@ To add Jam Deck to your OBS scene:
 
 ### Theme Selection
 
-Hover over the overlay (right-click -> Inspect) to reveal the settings menu:
+Hover over the overlay (right-click > Interact or press the Interact button below the preview) to reveal the settings menu:
 
 #### Rounded Themes
 - **Natural** (default): Soft green theme with rounded corners.
