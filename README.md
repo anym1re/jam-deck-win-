@@ -1,12 +1,12 @@
 # Jam Deck for OBS: Apple Music Stream Display
 
-A customizable Apple Music now playing display for macOS.
+A customizable Apple Music now playing display for Windows.
 
 ![Screenshot of Jam Deck showing four Apple Music now playing widgets with different color themes. Each widget displays album artwork, song title, and artist information in various styles - pink, green, dark, and white themes with different song information including Japanese characters, Wintime by CHAI, 'Dakotas' by Sofia Kourtesis, 'Learning Lessens (Shy One Remix)' by Andrew Ashong & Kaidi Tatham, and 'Hidden Memory' by AceMoMa.](assets/images/preview.png)
 
-![Screenshot of a macOS system notification from Jam Deck. The notification features the Jam Deck icon (a pink jar) and displays 'Server Started' as the header, followed by the message 'Now playing overlay is active!' The notification uses the standard macOS rounded rectangle design with a light gray background.](/assets/images/jam-deck-macos-notification.png)
+![Screenshot of a system notification from Jam Deck. The notification features the Jam Deck icon (a pink jar) and displays 'Server Started' as the header, followed by the message 'Now playing overlay is active!'](/assets/images/jam-deck-macos-notification.png)
 
-![Screenshot of Jam Deck's menu bar interface on macOS. The interface shows a dropdown menu with options including 'Stop Server', 'Copy Scene URL' (which has a submenu showing scene names like 'default', 'gaming', 'away', 'Cozy-10-9', 'minimal-16-9', 'sakura', and 'coding'), 'Open in Browser', 'Documentation', 'About', and 'Quit'. The submenu also includes options for 'Add New Scene...' and 'Manage Scenes'.](/assets/images/jam-deck-macos-menubar.png)
+![Screenshot of Jam Deck's tray interface. The interface shows a dropdown menu with options including 'Stop Server', 'Copy Scene URL' (which has a submenu showing scene names like 'default', 'gaming', 'away', 'Cozy-10-9', 'minimal-16-9', 'sakura', and 'coding'), 'Open in Browser', 'Documentation', 'About', and 'Quit'. The submenu also includes options for 'Add New Scene...' and 'Manage Scenes'.](/assets/images/jam-deck-macos-menubar.png)
 
 ## Quick Links
 - [Download](https://github.com/detekoi/jam-deck/releases/)
@@ -46,48 +46,47 @@ A customizable Apple Music now playing display for macOS.
 
 ## Installation
 
-### Recommended: Menu Bar App
+### Recommended: Tray App
 
-1. Download the latest Jam Deck.app from the [Releases](https://github.com/detekoi/jam-deck/releases/) page.
-2. Move to your Applications folder.
-3. Launch Jam Deck from your Applications folder.
-   - If you see a warning about an app from an unidentified developer, see [Apple's guide](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
-4. The app will appear in your menu bar with a musical note icon.
-5. The server starts automatically when you launch the app.
+1. Download the latest Jam Deck Windows release from the [Releases](https://github.com/detekoi/jam-deck/releases/) page.
+2. Run the installer or extract the archive to a chosen folder.
+3. Launch Jam Deck; it will appear in the system tray (notification area).
+4. The server starts automatically when you launch the app.
 
-To continue, jump to [Menu Bar App](#menu-bar-app).
+To continue, jump to [Tray App](#tray-app).
 
 <details>
-<summary><h3>Advanced: Manual Installation</h3></summary>
+<summary><h3>Advanced: Manual Installation (Windows)</h3></summary>
 
 **Requirements:**
-- Python 3.6 or later
+- Python 3.8 or later
 
 Steps:
 1. Clone this repository:
-   ```bash
+   ```powershell
    git clone https://github.com/yourusername/jam-deck.git
    cd jam-deck
    ```
 
-2. Make sure the Python script is executable:
-   ```bash
-   chmod +x music_server.py
+2. Install required Python packages:
+   ```powershell
+   pip install pywinrt pystray pyperclip pyzmq pillow win10toast
    ```
 
 3. Start the server:
-   ```bash
-   ./music_server.py
+   ```powershell
+   python music_server.py
    ```
+
 </details>
 
 ## Usage
 
 Once installed, the overlay will automatically display your currently playing Apple Music tracks.
 
-### Menu Bar App
+### Tray App
 
-Jam Deck's menu bar app provides easy access to all features directly from your Mac's menu bar:
+Jam Deck's tray app provides easy access to all features directly from your system tray (notification area):
 
 1. **Server Control**
    - Click "Start Server" to begin displaying your music.
@@ -159,42 +158,30 @@ In the settings menu:
 <details>
 <summary>Permission errors</summary>
 
-- macOS may need permission to control Apple Music.
-- Go to System Preferences → Security & Privacy → Automation.
-- Ensure "Jam Deck" has permission to control Apple Music.
-- If you see a permissions prompt when launching the app, click "OK" to allow access.
+- Windows requires that the Apple Music (Microsoft Store) app expose playback through the System Media Transport Controls (SMTC). If now-playing information does not appear, make sure the media app is running and playing.
+- If SMTC data is not available for Apple Music, try playing media in another app that supports SMTC (e.g., Groove, Spotify UWP) to verify SMTC access.
+- If you see permission-related behavior from antivirus or UWP settings, ensure the media app is allowed to report media sessions.
 
 </details>
 
 ## Auto-Start on Boot
 
 <details>
-<summary>Using the Menu Bar App</summary>
+<summary>Auto-start on Windows</summary>
 
-If you're using the menu bar app (Option 1 installation):
+Using the Tray App:
+1. Create a shortcut to the Jam Deck executable and place it in the user's Startup folder:
+   - Press Win+R, enter: shell:startup
+   - Paste the Jam Deck shortcut into that folder.
 
-1. Go to System Preferences → Users & Groups → Login Items.
-2. Click the "+" button.
-3. Browse to your Applications folder and select "Jam Deck.app"
-4. The app will now start automatically at login.
+Using Task Scheduler (optional, more control):
+1. Open Task Scheduler and create a new task.
+2. Configure it to run at user logon and point the action to the Jam Deck executable.
+3. Set "Run only when user is logged on" (or configure otherwise as needed).
 
-</details>
-
-<details>
-<summary>Using the Manual Installation</summary>
-
-If you're using the manual installation:
-
-1. Create an Automator application:
-   - Open Automator.
-   - Create a new Application.
-   - Add a "Run Shell Script" action.
-   - Enter: `cd /path/to/jam-deck && ./music_server.py`
-   - Save as "Start Jam Deck"
-
-2. Add to Login Items:
-   - System Preferences → Users & Groups → Login Items.
-   - Add the Automator application you created.
+Using Manual Installation:
+1. Create a shortcut that runs: `python C:\path\to\jam-deck\music_server.py`
+2. Place that shortcut in the Startup folder or configure a Task Scheduler task.
 
 </details>
 
@@ -217,9 +204,10 @@ If you need to manually specify a different port (Manual installation only):
 ## Building from Source
 
 **Requirements:**
-- Python 3.6 or later
-- macOS 10.14 or later
-- create-dmg (optional, for creating DMG installers)
+- Python 3.8 or later
+- Windows 10 or 11
+- pyinstaller (for creating .exe builds)
+- NSIS or Inno Setup (for building installers)
 
 If you want to build the Jam Deck menu bar app from source:
 
@@ -249,8 +237,8 @@ If you want to build the Jam Deck menu bar app from source:
 
 ### Build Scripts
 
-- `build.sh`: Automated build script for macOS (py2app + create-dmg).
-- `setup.py`: Main build configuration for py2app.
+- `build.sh`: Automated build script for building the packaged application.
+- `setup.py`: Main build configuration and packaging helpers.
 - `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build.
 
 Windows build notes:
@@ -260,13 +248,18 @@ Windows build notes:
   - pyinstaller --onefile --add-data "overlay.html;." --add-data "overlay.css;." --add-data "overlay.js;." music_server.py
   - Package the resulting .exe with NSIS or Inno Setup to create an installer.
 
-### Script Permissions
-
-Ensure that your build script has execute permissions. You can set this by running `chmod +x build.sh` in the terminal.
+### Script/Build Permissions
+ 
+On Windows, ensure you run PowerShell or the Command Prompt with sufficient privileges when creating installers or writing files to protected locations. For PyInstaller builds, run from a normal user shell; for installer creation with NSIS/Inno, elevated privileges may be required to place files in Program Files when testing installation.
 
 ### Environment Considerations
-
-Make sure that the necessary tools (osascript, rm, python, create-dmg) are installed and accessible in your system's PATH. The create-dmg tool is only needed if you want to create DMG installers.
+ 
+Make sure that the necessary Windows tools and Python packages are installed and accessible in your system's PATH. Important items:
+- Python and pip
+- pywinrt (winrt) for SMTC access
+- pyinstaller for creating executables
+- NSIS or Inno Setup for creating installers
+- Pillow, pystray, pyperclip, pyzmq and win10toast (or plyer) as runtime dependencies
 
 ## Font Attribution
 
