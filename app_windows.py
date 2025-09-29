@@ -403,8 +403,10 @@ class JamDeckTray:
             "Jam Deck for OBS\n"
             f"Version {VERSION}\n\n"
             "Display your Apple Music tracks in OBS.\n\n"
-            "GitHub: https://github.com/detekoi/jam-deck\n"
-            "© 2025 Henry Manes"
+            "GitHub (Original | macOS): https://github.com/detekoi/jam-deck\n"
+            "© 2025 Henry Manes\n\n"
+            "GitHub (Fork | Windows): https://github.com/anym1re/fork-jam-deck\n"
+            "© 2025 anym1re"
         )
         # Try a modal dialog to ensure the user sees it (toast may be suppressed on some systems)
         try:

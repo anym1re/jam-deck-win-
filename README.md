@@ -66,12 +66,18 @@ Steps:
 
 2. Install required Python packages:
    ```powershell
-   pip install pywinrt pystray pyperclip pyzmq pillow win10toast
+   pip install pystray pyperclip pyzmq pillow win10toast `
+     winrt-runtime winrt-Windows.Media.Control winrt-Windows.Foundation `
+     winrt-Windows.Foundation.Collections winrt-Windows.Storage winrt-Windows.Storage.Streams
+   # Optional alternative: pip install pywinrt
    ```
 
 3. Start the server:
    ```powershell
-   python music_server.py
+   python music_server.py --port 8080 --debug
+   # Flags:
+   #   --port <number>  Prefer this port; if busy, the server will auto-select the next free one.
+   #   --debug          Enable verbose logging to logs/overlay.log
    ```
 
 </details>
@@ -107,7 +113,7 @@ To add Jam Deck to your OBS scene:
 4. Choose `Create New` and give it a name (e.g., "Now Playing Music").
 5. Click `OK`.
 6. In the Browser Source properties:
-   - URL: Use the app to copy a scene-specific URL. The default URL is `http://localhost:8080/`
+   - URL: Use the app to copy a scene-specific URL. Default starting URL is `http://localhost:8080/` (the server may auto-select the next free port).
    - Width: 400 (recommended minimum)
    - Height: 140
    - Check "Refresh browser when scene becomes active."
@@ -185,22 +191,29 @@ Using Manual Installation:
 
 Advanced users can modify the CSS in `overlay.css` to create custom themes or change the layout.
 
-### Changing the Port
+### Changing the Port and Debug Logs
 
-The server automatically starts on port 8080. If this port is already in use, it will automatically find and use the next available port. The selected port will be displayed in the menu bar app and system notifications.
+- Default starting port is 8080. If it is busy, the server will automatically try the next available ports.
+- The tray app detects the actual port automatically and shows “Server URL: http://localhost:<port>”.
 
-If you need to manually specify a different port (Manual installation only):
+Ways to set a specific port:
+- Tray App: edit %USERPROFILE%\.jamdeck_config.json and set "preferred_port" to the desired number, then restart the tray/server.
+- Manual run: start the server with a flag, e.g.:
+  ```powershell
+  python music_server.py --port 1234
+  ```
 
-1. Open `music_server.py` in a text editor.
-2. Find the line near the top that says `PORT = 8080`
-3. Change `8080` to your desired port number.
-4. Save the file and restart the server.
-5. Update your browser source URL in OBS to use the new port.
+Debug logging:
+- To enable verbose logging to logs/overlay.log, start with --debug or set the environment variable:
+  ```powershell
+  set JAMDECK_DEBUG=1
+  python music_server.py
+  ```
 
 ## Building from Source
 
 **Requirements:**
-- Python 3.8 or later
+- Python 3.10 or later
 - Windows 10 or 11
 - pyinstaller (for creating .exe builds)
 - NSIS or Inno Setup (for building installers)
@@ -209,7 +222,7 @@ If you want to build the Jam Deck menu bar app from source:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/jam-deck.git
+   git clone https://github.com/yourusername/fork-jam-deck.git
    cd jam-deck
    ```
 
@@ -226,7 +239,7 @@ To build for Windows, use the provided PowerShell helper or PyInstaller spec fil
 
 ### Build Scripts
 
-- `build.sh`: Automated build script for building the packaged application.
+- `build_windows.ps1`: Automated Windows build that produces music_server.exe and JamDeckTray.exe and stages assets.
 - `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build.
 
 Windows build notes:
@@ -248,6 +261,103 @@ Make sure that the necessary Windows tools and Python packages are installed and
 - pyinstaller for creating executables
 - NSIS or Inno Setup for creating installers
 - Pillow, pystray, pyperclip, pyzmq and win10toast (or plyer) as runtime dependencies
+
+## Русская версия
+
+Jam Deck для OBS: отображение текущего трека Apple Music на Windows.
+
+Ссылки
+- Загрузка: https://github.com/anym1re/fork-jam-deck
+- Установка: см. разделы ниже
+- Настройка OBS: см. раздел "Настройка OBS"
+- Выбор темы: см. раздел "Выбор темы"
+
+Возможности
+- Показывает текущий трек Apple Music с обложкой.
+- 10 тем оформления: 5 скруглённых (Natural, Twitch, Dark, Pink, Light) и 5 квадратных (Transparent, Neon, Terminal, Retro, High Contrast).
+- Адаптивная или фиксированная ширина.
+- Автоматически скрывается, когда музыка не играет.
+- Плавные анимации при смене трека.
+- Меню настроек появляется только при наведении курсора.
+- Настройки сохраняются по сценам (scene) в localStorage.
+- Трэй‑приложение для управления сервером и сценами.
+- Копирование URL сцены в один клик.
+- Бегущая строка для длинных названий.
+- Автовыбор порта при занятости 8080.
+
+Требования
+- Windows 10/11 (приложение Apple Music из Microsoft Store, SMTC).
+- OBS Studio или другой софт с источником "Browser".
+
+Установка — Рекомендуется: трэй‑приложение
+1) Скачайте релиз со страницы Releases.
+2) Установите или распакуйте.
+3) Запустите Jam Deck — иконка появится в системном трее.
+4) Сервер стартует автоматически.
+
+Установка — Вручную (Windows)
+Требования: Python 3.10+
+- Установите зависимости:
+  ```powershell
+  pip install pystray pyperclip pyzmq pillow win10toast `
+    winrt-runtime winrt-Windows.Media.Control winrt-Windows.Foundation `
+    winrt-Windows.Foundation.Collections winrt-Windows.Storage winrt-Windows.Storage.Streams
+  # Дополнительно (альтернатива): pip install pywinrt
+  ```
+- Запуск сервера:
+  ```powershell
+  python music_server.py --port 8080 --debug
+  ```
+  Флаги:
+  - --port <номер> — предпочитаемый порт; при занятости будет выбран следующий свободный.
+  - --debug — подробное логирование в logs/overlay.log.
+
+Использование — трэй‑приложение
+- Управление сервером: Start/Stop Server.
+- Управление сценами: Copy Scene URL, Add/Rename/Delete.
+- Открыть в браузере: предварительный просмотр.
+- Документация и About.
+
+Настройка OBS
+1) Выберите сцену.
+2) Источники → + → Browser.
+3) Create New → имя (например, "Now Playing Music") → OK.
+4) Свойства:
+   - URL: скопируйте из трея (например, http://localhost:8080/; порт может отличаться).
+   - Width: 400 (мин. рекомендация)
+   - Height: 140
+   - Включите “Refresh browser when scene becomes active”.
+5) OK.
+
+Выбор темы
+- Скруглённые: Natural (по умолчанию), Twitch, Dark, Pink, Light.
+- Квадратные: Transparent, Neon, Terminal, Retro, High Contrast.
+
+Ширина
+- A — адаптивная (по содержимому).
+- F — фиксированная (растягивается на всю ширину источника, по умолчанию).
+
+Устранение неполадок
+- Нет данных: убедитесь, что сервер и Apple Music запущены; попробуйте Play/Pause.
+- Диагностика: добавьте ?debug=true к URL оверлея (покажет отладочную панель).
+- Логи: включите --debug или переменную окружения JAMDECK_DEBUG=1; смотрите logs/overlay.log.
+- SMTC: Apple Music (UWP) должен публиковать сессию через SMTC. Проверьте, что другие UWP‑плееры тоже видны (для теста).
+
+Автозапуск при входе в систему (Windows)
+- Трэй‑приложение: добавьте ярлык в папку shell:startup.
+- Планировщик заданий: запуск при входе пользователя.
+- Ручной запуск: ярлык на python C:\path\to\jam-deck\music_server.py.
+
+Порт и отладка
+- По умолчанию используется 8080; при занятости выбирается следующий свободный.
+- Задать порт:
+  - Трэй: отредактируйте %USERPROFILE%\.jamdeck_config.json — "preferred_port".
+  - Вручную: python music_server.py --port 1234
+- Логи: --debug или JAMDECK_DEBUG=1 → logs/overlay.log.
+
+Сборка из исходников (Windows)
+- PowerShell: .\build_windows.ps1 -version "1.0.0"
+- PyInstaller вручную: см. раздел “Building from Source”.
 
 ## Font Attribution
 
