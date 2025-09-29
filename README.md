@@ -30,8 +30,19 @@ A customizable Apple Music now playing display for macOS.
 
 ## Requirements
 
-- macOS (uses AppleScript to communicate with Apple Music).
+- Windows 10/11 (SMTC-based Apple Music from Microsoft Store).
 - OBS Studio or similar streaming software with browser source support.
+
+### Windows-specific notes
+- On Windows the Apple Music app is a Microsoft Store UWP app. This fork supports Windows via the System Media Transport Controls (SMTC) where available.
+- Recommended Python packages for Windows:
+  - python >= 3.8
+  - pywinrt (winrt) — for SMTC access (pip install pywinrt)
+  - pystray — system tray icon (pip install pystray pillow)
+  - pyperclip — clipboard handling (pip install pyperclip)
+  - win10toast or plyer — native notifications (pip install win10toast)
+  - pyzmq — ZeroMQ support (pip install pyzmq)
+  - pyinstaller — for creating .exe builds (pip install pyinstaller)
 
 ## Installation
 
@@ -238,9 +249,16 @@ If you want to build the Jam Deck menu bar app from source:
 
 ### Build Scripts
 
-- `build.sh`: Automated build script that handles closing any running instances, cleaning previous builds, building the app, and creating a DMG installer.
+- `build.sh`: Automated build script for macOS (py2app + create-dmg).
 - `setup.py`: Main build configuration for py2app.
 - `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build.
+
+Windows build notes:
+- This repository includes a Windows-friendly tray app `app_windows.py` and a cross-platform server `music_server.py`.
+- To build a Windows executable, use PyInstaller and then create an installer with NSIS or Inno Setup. Example commands:
+  - pip install pyinstaller
+  - pyinstaller --onefile --add-data "overlay.html;." --add-data "overlay.css;." --add-data "overlay.js;." music_server.py
+  - Package the resulting .exe with NSIS or Inno Setup to create an installer.
 
 ### Script Permissions
 

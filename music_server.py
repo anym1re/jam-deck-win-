@@ -10,6 +10,8 @@ import signal
 import atexit
 import socket
 import argparse # Import argparse
+import tempfile
+import platform
 
 # Version information
 VERSION = "1.1.3"
@@ -43,15 +45,18 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-# Function to get current Apple Music track via AppleScript
+# Function to get current Apple Music track via AppleScript (macOS)
 def get_apple_music_track():
     # Define a unique delimiter unlikely to be in metadata
     delimiter = "|||"
+    # Use a portable temporary file location
+    artwork_file = os.path.join(tempfile.gettempdir(), "harmony_deck_cover.jpg")
+    artwork_log = os.path.join(tempfile.gettempdir(), "harmony-deck-log.txt")
     
     # Modified AppleScript to return delimited data instead of JSON
     script = f'''
     set output_delimiter to "{delimiter}"
-
+ 
     if application "Music" is running then
         tell application "Music"
             if player state is playing then
@@ -65,7 +70,7 @@ def get_apple_music_track():
                 set hasArtwork to false
                 try
                     set myArtwork to artwork 1 of currentTrack
-                    set artworkFile to "/tmp/harmony_deck_cover.jpg"
+                    set artworkFile to "{artwork_file}"
                     if format of myArtwork is JPEG picture then
                         set myPicture to data of myArtwork
                         set myFile to (open for access (POSIX file artworkFile) with write permission)
@@ -78,7 +83,7 @@ def get_apple_music_track():
                     end if
                 on error errMsg
                     -- Log error but continue
-                    do shell script "echo 'Artwork error: " & errMsg & "' >> /tmp/harmony-deck-log.txt"
+                    do shell script "echo 'Artwork error: " & errMsg & "' >> {artwork_log}"
                 end try
                 
                 -- Return delimited string: playing_state|||title|||artist|||album|||has_artwork
@@ -136,13 +141,13 @@ def get_apple_music_track():
                 if has_artwork:
                     # Generate timestamp for cache busting
                     try:
-                        timestamp = int(os.path.getmtime("/tmp/harmony_deck_cover.jpg"))
+                        timestamp = int(os.path.getmtime(artwork_file))
                         data["artworkPath"] = f"/artwork?t={timestamp}"
                     except FileNotFoundError:
                         # Handle case where artwork file might not exist when getting timestamp
                         print("Warning: Artwork file not found for timestamp, skipping artwork path.")
                         # Continue without artwork path, data dictionary is already populated
-                    
+                     
                 # Convert dictionary to JSON using Python's json module for correct escaping
                 return json.dumps(data)
             else:
@@ -164,7 +169,7 @@ def get_apple_music_track():
             # Unexpected status from AppleScript
             print(f"Error: Unexpected status from AppleScript: {status}. Parts: {parts}")
             return json.dumps({"playing": False, "error": "Unknown response from AppleScript"})
-
+ 
     except subprocess.TimeoutExpired:
         print("Error: AppleScript timed out after 5 seconds")
         return json.dumps({"playing": False, "error": "AppleScript timed out"})
@@ -172,6 +177,90 @@ def get_apple_music_track():
         print(f"Error processing AppleScript output or getting artwork timestamp: {e}")
         # Attempt to return a generic error if parsing failed badly
         return json.dumps({"playing": False, "error": f"Python processing error: {str(e)}"})
+ 
+# ---------------------------------------------------------
+# Windows: System Media Transport Controls (SMTC) access
+def get_windows_smtc_track():
+    """Attempt to read current media session via Windows SMTC (supports UWP/Store apps like Apple Music)."""
+    try:
+        # Lazy import winrt to avoid hard dependency on non-Windows platforms
+        try:
+            from winrt.windows.media.control import GlobalSystemMediaTransportControlsSessionManager as SMTCManager
+        except Exception as imp_e:
+            return json.dumps({"playing": False, "error": f"winrt import failed: {imp_e}"})
+ 
+        try:
+            mgr = SMTCManager.request_async().get()
+            sessions = mgr.get_sessions()
+        except Exception as e:
+            return json.dumps({"playing": False, "error": f"SMTC request failed: {e}"})
+ 
+        # Prefer the first session that reports a playing state
+        for session in sessions:
+            try:
+                # Playback info
+                control = session.get_current_media_properties()
+                # Some sessions expose title/artist/album differently; use getattr for resilience
+                title = getattr(control, "title", "") or ""
+                artist = getattr(control, "artist", "") or ""
+                album = getattr(control, "album_title", "") or getattr(control, "album", "") or ""
+ 
+                # Try to extract thumbnail (may not be available)
+                artwork_path = None
+                try:
+                    thumb = getattr(control, "thumbnail", None)
+                    if thumb:
+                        try:
+                            stream = thumb.open_read_async().get()
+                            tmp_file = os.path.join(tempfile.gettempdir(), "harmony_deck_cover.jpg")
+                            with open(tmp_file, "wb") as f:
+                                # stream supports read_bytes in some runtime bindings; fallback to reading chunks
+                                try:
+                                    data = stream.read_bytes(stream.size)
+                                    f.write(data)
+                                except Exception:
+                                    try:
+                                        # Fallback: read via stream.read_async if available
+                                        reader = stream
+                                        f.write(b"")  # leave empty if cannot read
+                                    except Exception:
+                                        pass
+                            artwork_path = tmp_file
+                        except Exception:
+                            artwork_path = None
+                except Exception:
+                    artwork_path = None
+ 
+                if title or artist:
+                    data = {"playing": True, "title": title, "artist": artist, "album": album}
+                    if artwork_path:
+                        try:
+                            ts = int(os.path.getmtime(artwork_path))
+                            data["artworkPath"] = f"/artwork?t={ts}"
+                        except Exception:
+                            pass
+                    return json.dumps(data)
+            except Exception:
+                # If any session fails, continue to next
+                continue
+ 
+        return json.dumps({"playing": False, "error": "No active media session"})
+    except Exception as e:
+        return json.dumps({"playing": False, "error": f"Unexpected SMTC error: {e}"})
+ 
+# Cross-platform wrapper used by the server
+def get_now_playing():
+    """Return JSON string describing current playback; dispatches per-platform."""
+    try:
+        pf = platform.system()
+        if pf == "Darwin":
+            return get_apple_music_track()
+        elif pf == "Windows":
+            return get_windows_smtc_track()
+        else:
+            return json.dumps({"playing": False, "error": f"Unsupported platform: {pf}"})
+    except Exception as e:
+        return json.dumps({"playing": False, "error": f"Now playing wrapper error: {e}"})
 
 # Create custom HTTP request handler
 class MusicHandler(BaseHTTPRequestHandler):
@@ -242,7 +331,7 @@ class MusicHandler(BaseHTTPRequestHandler):
         # Route requests
         if path == '/nowplaying':
             print("Handling /nowplaying request")
-            music_data = get_apple_music_track()
+            music_data = get_now_playing()
             
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -258,8 +347,8 @@ class MusicHandler(BaseHTTPRequestHandler):
             self.wfile.write(music_data.encode())
             
         elif path == '/artwork' or path.startswith('/artwork?'):
-            # Fixed path to the artwork file
-            artwork_path = "/tmp/harmony_deck_cover.jpg"
+            # Fixed path to the artwork file (use OS temp directory)
+            artwork_path = os.path.join(tempfile.gettempdir(), "harmony_deck_cover.jpg")
             print(f"Serving artwork from: {artwork_path}")
             
             try:
@@ -438,13 +527,9 @@ def run_server(preferred_port=None): # Accept preferred_port argument
         return
 
     try:
-        # Test the AppleScript before starting the server (only if server started)
-        print("\nTesting AppleScript...")
-        test_result = get_apple_music_track()
-        print(f"Test result: {test_result}")
-        print("\nServer ready!")
-        print("\nTesting AppleScript...")
-        test_result = get_apple_music_track()
+        # Test the now-playing interface before starting the server (only if server started)
+        print("\nTesting now-playing interface...")
+        test_result = get_now_playing()
         print(f"Test result: {test_result}")
         print("\nServer ready!")
 
