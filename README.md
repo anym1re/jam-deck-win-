@@ -2,11 +2,7 @@
 
 A customizable Apple Music now playing display for Windows.
 
-![Screenshot of Jam Deck showing four Apple Music now playing widgets with different color themes. Each widget displays album artwork, song title, and artist information in various styles - pink, green, dark, and white themes with different song information including Japanese characters, Wintime by CHAI, 'Dakotas' by Sofia Kourtesis, 'Learning Lessens (Shy One Remix)' by Andrew Ashong & Kaidi Tatham, and 'Hidden Memory' by AceMoMa.](assets/images/preview.png)
-
-![Screenshot of a system notification from Jam Deck. The notification features the Jam Deck icon (a pink jar) and displays 'Server Started' as the header, followed by the message 'Now playing overlay is active!'](/assets/images/jam-deck-macos-notification.png)
-
-![Screenshot of Jam Deck's tray interface. The interface shows a dropdown menu with options including 'Stop Server', 'Copy Scene URL' (which has a submenu showing scene names like 'default', 'gaming', 'away', 'Cozy-10-9', 'minimal-16-9', 'sakura', and 'coding'), 'Open in Browser', 'Documentation', 'About', and 'Quit'. The submenu also includes options for 'Add New Scene...' and 'Manage Scenes'.](/assets/images/jam-deck-macos-menubar.png)
+![Preview of Jam Deck overlay](assets/images/preview.png)
 
 ## Quick Links
 - [Download](https://github.com/detekoi/jam-deck/releases/)
@@ -217,23 +213,16 @@ If you want to build the Jam Deck menu bar app from source:
    cd jam-deck
    ```
 
-2. Install py2app:
-   ```
-   pip install py2app
-   ```
+Note: macOS py2app packaging is no longer the primary build flow for this fork.
+If you need to produce macOS bundles you can re-enable py2app on a macOS build host,
+but for Windows builds please use the instructions in "Windows build notes" above.
 
-3. Option A - Using the build script (recommended):
-   ```
-   chmod +x build.sh
-   ./build.sh
-   ```
-   
-   Option B - Manual build:
-   ```
-   python setup.py py2app
-   ```
-
-4. The built application will be available in the `dist` directory.
+To build for Windows, use the provided PowerShell helper or PyInstaller spec files:
+- PowerShell automated build: `.\build_windows.ps1 -version "1.0.0"`
+- Or run PyInstaller manually:
+  - pip install pyinstaller
+  - pyinstaller --onefile --add-data "overlay.html;." --add-data "overlay.css;." --add-data "overlay.js;." music_server.py
+  - pyinstaller --onefile --add-data "overlay.html;." --add-data "overlay.css;." --add-data "overlay.js;." app_windows.py
 
 ### Build Scripts
 
