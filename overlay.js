@@ -437,8 +437,30 @@
                             const songTitleEl = document.getElementById('songTitle');
                             const songArtistEl = document.getElementById('songArtist');
                             
-                            const titleText = data.title;
-                            const artistAlbumText = data.artist + (data.album ? ` • ${data.album}` : '');
+                            let titleText = data.title || '';
+                            let artistAlbumText = (data.artist || '') + (data.album ? ` • ${data.album}` : '');
+                            
+                            // Fallback: if no metadata provided but playing=true, show app name and status
+                            if (!titleText && !data.artist && data.playing) {
+                                const aumid = data.appId || '';
+                                let appName = 'Now Playing';
+                                if (aumid.includes('AppleMusic')) {
+                                    appName = 'Apple Music';
+                                } else if (aumid.toLowerCase().includes('spotify')) {
+                                    appName = 'Spotify';
+                                } else if (aumid) {
+                                    // Derive a readable name from AUMID
+                                    try {
+                                        const parts = aumid.split(/[.!]/);
+                                        appName = parts[parts.length - 1] || aumid;
+                                    } catch (e) {
+                                        appName = aumid;
+                                    }
+                                }
+                                const statusText = (data.status ? (data.status.charAt(0).toUpperCase() + data.status.slice(1)) : 'Playing');
+                                titleText = appName;
+                                artistAlbumText = statusText;
+                            }
                             
                             songTitleEl.classList.remove('not-playing');
                             

@@ -10,7 +10,7 @@ python --version
 
 Write-Host "Installing build dependencies..."
 pip install --upgrade pip
-pip install pyinstaller pystray pillow pyperclip pyzmq win10toast
+pip install pyinstaller pystray pillow pyperclip pyzmq modulegraph win10toast winrt-runtime winrt-Windows.Media.Control winrt-Windows.Foundation winrt-Windows.Foundation.Collections winrt-Windows.Storage winrt-Windows.Storage.Streams 
 
 # Optional: winrt installation may require separate steps
 Write-Host "Note: If you plan to use SMTC via winrt, install pywinrt with 'pip install pywinrt' and follow its installation instructions."
@@ -33,15 +33,43 @@ $dataArgs = @(
 )
 
 # Common pyinstaller args
-$common = @("--noconfirm", "--clean", "--onefile", "--windowed")
-if ($iconPath) { $common += @("--icon", $iconPath) }
-$common += $dataArgs
+# Separate args for server (console) and tray (windowed) so logs are visible for the server.
+$commonBase = @("--noconfirm", "--clean", "--onefile")
+# Build the tray app as windowed (no console)
+$trayArgs = $commonBase + @("--windowed")
+# Build the server as windowed (no console). Debug lines are written to logs/overlay.log when enabled.
+$serverArgs = $commonBase + @("--windowed")
+if ($iconPath) {
+  $trayArgs += @("--icon", $iconPath)
+  $serverArgs += @("--icon", $iconPath)
+}
+# Include data files for both builds
+# Ensure hidden imports for modules that may be dynamically imported at runtime
+# (PyInstaller sometimes misses stdlib or dynamically imported modules such as 'uuid' or
+# packages like 'winrt' used via runtime bindings). Adding them explicitly prevents
+# "No module named 'uuid'" or missing winrt submodule errors in the bundled executable.
+$hiddenImports = @(
+  "--hidden-import", "winrt.windows.media.control",
+  "--hidden-import", "winrt.windows.foundation",
+  "--hidden-import", "winrt.windows.foundation.collections",
+  "--hidden-import", "winrt.windows.storage.streams"
+)
+$trayArgs += $hiddenImports
+$serverArgs += $hiddenImports
+$trayArgs += $dataArgs
+$serverArgs += $dataArgs
 
-Write-Host "Building music_server.exe..."
-pyinstaller @common --name "music_server" music_server.py
+# Build both the headless server and the tray app:
+# - music_server.exe: the HTTP server that serves the overlay and reads SMTC information.
+# - JamDeckTray.exe: the Windows system-tray GUI which can launch/control the server as a subprocess.
+# We intentionally build both executables so users can either run the server standalone
+# or use the tray app which manages the server and provides an easy UI.
+# After building we copy both .exe files into the staging folder `dist_installer`.
+Write-Host "Building music_server.exe (windowed)..."
+pyinstaller @serverArgs --name "music_server" music_server.py
 
-Write-Host "Building Jam Deck tray app (JamDeckTray.exe)..."
-pyinstaller @common --name "JamDeckTray" app_windows.py
+Write-Host "Building Jam Deck tray app (JamDeckTray.exe) (windowed)..."
+pyinstaller @trayArgs --name "JamDeckTray" app_windows.py
 
 # Prepare installer staging directory
 $staging = ".\dist_installer"

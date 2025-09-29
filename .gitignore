@@ -44,3 +44,6 @@ npm-debug.log*
 *.icns
 /tmp/
 .aider*
+*.spec
+*.nsi
+/dist_installer

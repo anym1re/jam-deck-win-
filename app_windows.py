@@ -91,10 +91,10 @@ class JamDeckTray:
         return pystray.Menu(
             pystray.MenuItem(lambda item: "Stop Server" if self.server_running else "Start Server", self.toggle_server),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Server URL", lambda: None, enabled=False),
+            pystray.MenuItem(lambda item: f"Server URL: http://localhost:{self.actual_port}", lambda: None, enabled=False),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Copy Scene URL", lambda: None, submenu=self.build_copy_menu()),
-            pystray.MenuItem("Manage Scenes", lambda: None, submenu=self.build_manage_menu()),
+            pystray.MenuItem("Copy Scene URL", pystray.Menu(*self.build_copy_menu())),
+            pystray.MenuItem("Manage Scenes", pystray.Menu(*self.build_manage_menu())),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Open in Browser", self.open_browser),
             pystray.Menu.SEPARATOR,
@@ -135,11 +135,100 @@ class JamDeckTray:
     def start_server(self, icon=None, item=None):
         if self.server_running:
             return
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        server_path = os.path.join(script_dir, "music_server.py")
-        python_path = sys.executable
-        cmd = [python_path, server_path, "--port", str(self.preferred_port)]
-        self.server_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
+
+        # Candidate directories to search (in order)
+        candidates = []
+        try:
+            if sys.argv and sys.argv[0]:
+                candidates.append(os.path.dirname(os.path.abspath(sys.argv[0])))
+        except Exception:
+            pass
+        try:
+            candidates.append(os.path.dirname(os.path.abspath(sys.executable)))
+        except Exception:
+            pass
+        try:
+            candidates.append(os.path.dirname(os.path.abspath(__file__)))
+        except Exception:
+            pass
+
+        # Deduplicate preserving order
+        seen = set(); dirs = []
+        for d in candidates:
+            if d and d not in seen:
+                seen.add(d); dirs.append(d)
+
+        server_py_name = "music_server.py"
+        server_exe_name = "music_server.exe"
+
+        debug_log = os.path.join(tempfile.gettempdir(), "jamdeck_debug.log")
+        def dbg(msg):
+            try:
+                with open(debug_log, "a", encoding="utf-8") as lf:
+                    lf.write(f"[start_server] {time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
+            except Exception:
+                pass
+
+        cmd = None
+        chosen_cwd = None
+
+        for d in dirs:
+            cand_exe = os.path.join(d, server_exe_name)
+            cand_py = os.path.join(d, server_py_name)
+            try:
+                if os.path.exists(cand_exe) and os.path.isfile(cand_exe):
+                    # Avoid launching the same file as this process
+                    try:
+                        if os.path.realpath(cand_exe) == os.path.realpath(sys.executable):
+                            dbg(f"Skipping exe equal to sys.executable: {cand_exe}")
+                        else:
+                            cmd = [cand_exe, "--port", str(self.preferred_port)]
+                            chosen_cwd = d
+                            dbg(f"Selected exe: {cmd} (cwd={d})")
+                            break
+                    except Exception as e:
+                        dbg(f"Path compare error: {e}")
+                if cmd is None and os.path.exists(cand_py) and os.path.isfile(cand_py):
+                    python_path = sys.executable or "python"
+                    cmd = [python_path, cand_py, "--port", str(self.preferred_port)]
+                    chosen_cwd = d
+                    dbg(f"Selected script: {cmd} (cwd={d})")
+                    break
+            except Exception as e:
+                dbg(f"Exception checking {d}: {e}")
+
+        if cmd is None:
+            # Fallback to script next to source
+            try:
+                fallback_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), server_py_name)
+                cmd = [sys.executable or "python", fallback_py, "--port", str(self.preferred_port)]
+                chosen_cwd = os.path.dirname(os.path.abspath(__file__))
+                dbg(f"Fallback to: {cmd} (cwd={chosen_cwd})")
+            except Exception as e:
+                dbg(f"No server candidate found: {e}")
+                self.notify("Jam Deck", "Could not locate music_server to run.")
+                return
+
+        # Safety: avoid spawning ourself
+        try:
+            if os.path.realpath(cmd[0]) == os.path.realpath(sys.executable):
+                dbg(f"Refusing to spawn self ({cmd[0]}). Switching to script fallback.")
+                fallback_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), server_py_name)
+                cmd = [sys.executable or "python", fallback_py, "--port", str(self.preferred_port)]
+                chosen_cwd = os.path.dirname(os.path.abspath(__file__))
+                dbg(f"Switched to: {cmd}")
+        except Exception as e:
+            dbg(f"Self-check error: {e}")
+
+        # Spawn process
+        try:
+            dbg(f"Spawning: {cmd}, cwd={chosen_cwd}")
+            self.server_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', cwd=chosen_cwd)
+        except Exception as e:
+            dbg(f"Failed to spawn: {e}")
+            self.notify("Jam Deck", f"Failed to start server: {e}")
+            return
+
         self.server_thread = threading.Thread(target=self.monitor_server, daemon=True)
         self.server_thread.start()
         time.sleep(1)
@@ -163,21 +252,40 @@ class JamDeckTray:
 
     def monitor_server(self):
         proc = self.server_process
+        debug_log = os.path.join(tempfile.gettempdir(), "jamdeck_debug.log")
+        def dbg(msg):
+            try:
+                with open(debug_log, "a", encoding="utf-8") as lf:
+                    lf.write(f"[monitor_server] {time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
+            except Exception:
+                pass
+
         while proc and proc.poll() is None:
             try:
                 line = proc.stdout.readline()
                 if line:
-                    line=line.strip()
+                    line = line.strip()
                     print(f"Server: {line}")
+                    dbg(f"Server output: {line}")
                     if line.startswith("JAMDECK_PORT="):
                         try:
                             port = int(line.split("=")[1])
                             self.actual_port = port
                             self.icon.menu = self.build_menu()
-                        except Exception:
-                            pass
-            except Exception:
+                            dbg(f"Detected port: {port}")
+                        except Exception as e:
+                            dbg(f"Port parse error: {e}")
+            except Exception as e:
+                dbg(f"Exception reading output: {e}")
                 break
+
+        # Process ended
+        exit_code = None
+        try:
+            exit_code = proc.returncode
+        except Exception:
+            pass
+        dbg(f"Server exited with code: {exit_code}")
         if self.server_running:
             self.server_running = False
             self.icon.menu = self.build_menu()
@@ -268,16 +376,47 @@ class JamDeckTray:
 
     def delete_scene(self, scene):
         if scene in self.scenes:
-            self.scenes.remove(scene)
-            save_config(self.scenes, self.preferred_port)
-            self.icon.menu = self.build_menu()
-            self.notify("Jam Deck", f"Deleted '{scene}'")
+            # Ask for confirmation using tkinter; if tkinter is unavailable, fall back to deleting
+            confirm = True
+            try:
+                import tkinter as tk
+                from tkinter import messagebox
+                root = tk.Tk()
+                root.withdraw()
+                confirm = messagebox.askokcancel("Confirm Deletion", f"Are you sure you want to delete the scene '{scene}'?")
+                root.destroy()
+            except Exception:
+                # If tkinter is not available, proceed with deletion to preserve previous behavior
+                pass
+
+            if confirm:
+                self.scenes.remove(scene)
+                save_config(self.scenes, self.preferred_port)
+                self.icon.menu = self.build_menu()
+                self.notify("Jam Deck", f"Deleted '{scene}'")
 
     def open_documentation(self, icon=None, item=None):
         webbrowser.open("https://github.com/detekoi/jam-deck/blob/main/README.md")
 
     def show_about(self, icon=None, item=None):
-        self.notify("Jam Deck", f"Jam Deck for OBS\nVersion {VERSION}")
+        info = (
+            "Jam Deck for OBS\n"
+            f"Version {VERSION}\n\n"
+            "Display your Apple Music tracks in OBS.\n\n"
+            "GitHub: https://github.com/detekoi/jam-deck\n"
+            "© 2025 Henry Manes"
+        )
+        # Try a modal dialog to ensure the user sees it (toast may be suppressed on some systems)
+        try:
+            import tkinter as tk
+            from tkinter import messagebox
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showinfo("About Jam Deck", info)
+            root.destroy()
+        except Exception:
+            # Fallback to toast notification
+            self.notify("Jam Deck", info.replace("\n", " "))
 
     def quit(self, icon=None, item=None):
         if self.server_running:
