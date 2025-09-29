@@ -5,14 +5,13 @@
 - `overlay.html` - HTML/CSS/JS for the browser source display
 - `app_windows.py` - Windows tray application (pystray) for starting/stopping server and scene management
 - `app.py` - (deprecated) original macOS menu bar app; replaced by `app_windows.py` in this fork
-- `setup.py` - general packaging helper (cross-platform); use PyInstaller spec files for Windows builds
 - `collect_zmq.py` - Helper for ZeroMQ libraries bundling
 - Browser source URL: http://localhost:8080/
 
 ## Commands
 - Start server: `./music_server.py` or `python3 music_server.py`
 - Build app (Windows): use the provided PyInstaller specs or PowerShell helper; see README for details.
-- Version updates: Update VERSION in `music_server.py`, and package version in `setup.py`
+- Version updates: Update VERSION in `music_server.py`
 - No linting commands (simple Python/HTML project)
 
 ## Code Style Guidelines

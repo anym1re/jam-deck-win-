@@ -227,7 +227,6 @@ To build for Windows, use the provided PowerShell helper or PyInstaller spec fil
 ### Build Scripts
 
 - `build.sh`: Automated build script for building the packaged application.
-- `setup.py`: Main build configuration and packaging helpers.
 - `collect_zmq.py`: Helper script to ensure ZeroMQ libraries are properly included in the build.
 
 Windows build notes:

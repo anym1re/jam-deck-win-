@@ -14,7 +14,7 @@ import tempfile
 import platform
 
 # Version information
-VERSION = "1.1.3"
+VERSION = "1.0.0"
 
 # --- Debug/logging & runtime paths ---
 import time
